@@ -1,18 +1,9 @@
 package main
 
-import (
-	"fmt"
-	"log"
-	"net/http"
-)
-
-func helloWorld(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello World!!")
-}
+import "github.com/joaovicdsantos/whosbest-api/app"
 
 func main() {
-
-	http.HandleFunc("/", helloWorld)
-
-	log.Fatal(http.ListenAndServe(":3001", nil))
+	app := new(app.App)
+	app.Initialize()
+	app.Run()
 }
