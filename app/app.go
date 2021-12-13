@@ -1,6 +1,7 @@
 package app
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 
@@ -11,16 +12,18 @@ type App struct {
 	mux *http.ServeMux
 }
 
-func (a *App) Initialize() {
+func (a *App) Initialize(db *sql.DB) {
 	a.mux = http.NewServeMux()
-	a.SetRoutes()
+	a.SetRoutes(db)
 }
 
-func (a *App) SetRoutes() {
+func (a *App) SetRoutes(db *sql.DB) {
 	// User routes
-	a.mux.Handle("/user", &handler.UserRoutes{})
-	a.mux.Handle("/user/", &handler.UserRoutes{})
-	a.mux.HandleFunc("/login", new(handler.UserRoutes).Login)
+	userRoutes := new(handler.UserRoutes)
+	userRoutes.DB = db
+	a.mux.Handle("/user", userRoutes)
+	a.mux.Handle("/user/", userRoutes)
+	a.mux.HandleFunc("/login", userRoutes.Login)
 }
 
 func (a *App) Run() {

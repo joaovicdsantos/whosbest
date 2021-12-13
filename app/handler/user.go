@@ -1,9 +1,15 @@
 package handler
 
 import (
+	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"regexp"
+
+	"github.com/joaovicdsantos/whosbest-api/app/models"
+	"github.com/joaovicdsantos/whosbest-api/app/services"
 )
 
 var (
@@ -12,9 +18,16 @@ var (
 	registerRe = regexp.MustCompile(`^\/user[\/]*$`)
 )
 
-type UserRoutes struct{}
+type UserRoutes struct {
+	DB          *sql.DB
+	userService *services.UserService
+}
 
 func (u *UserRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	u.userService = &services.UserService{
+		DB: u.DB,
+	}
+	w.Header().Set("Content-Type", "application/json")
 	switch {
 	case r.Method == http.MethodGet && getAllRe.MatchString(r.URL.Path):
 		u.GetAll(w, r)
@@ -29,7 +42,13 @@ func (u *UserRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserRoutes) GetAll(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "GetAll route from user")
+	response, err := json.Marshal(map[string][]models.User{
+		"users": u.userService.GetAll(),
+	})
+	if err != nil {
+		panic("Error on format response")
+	}
+	w.Write(response)
 }
 
 func (u *UserRoutes) GetOne(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +56,18 @@ func (u *UserRoutes) GetOne(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserRoutes) Register(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Register route from user")
+	body, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	var user models.User
+	if err = json.Unmarshal(body, &user); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	u.userService.Create(user)
 }
 
 func (u *UserRoutes) Login(w http.ResponseWriter, r *http.Request) {
