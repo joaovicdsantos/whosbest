@@ -35,11 +35,10 @@ func (u *UserService) GetAll() []models.User {
 
 func (u *UserService) GetOne(id int) models.User {
 	sql := "SELECT * FROM Users WHERE Id = $1"
-
 	var user models.User
 	err := u.DB.QueryRow(sql, id).Scan(&user.Id, &user.Username, &user.Password)
 	if err != nil {
-		panic("SQL ERROR")
+		return models.User{}
 	}
 
 	return user

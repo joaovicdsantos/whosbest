@@ -7,7 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"strconv"
 
+	"github.com/joaovicdsantos/whosbest-api/app/helpers"
 	"github.com/joaovicdsantos/whosbest-api/app/models"
 	"github.com/joaovicdsantos/whosbest-api/app/services"
 	"golang.org/x/crypto/bcrypt"
@@ -43,17 +45,21 @@ func (u *UserRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserRoutes) GetAll(w http.ResponseWriter, r *http.Request) {
-	response, err := json.Marshal(map[string][]models.User{
-		"users": u.userService.GetAll(),
-	})
-	if err != nil {
-		panic("Error on format response")
-	}
-	w.Write(response)
+	data := u.userService.GetAll()
+	response := helpers.NewResponse(data, http.StatusOK)
+	response.SendResponse(w)
 }
 
 func (u *UserRoutes) GetOne(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "GetOne route from user")
+	id, _ := strconv.Atoi(fmt.Sprint(helpers.GetUrlParam(r.URL.Path, getOneRe)))
+	data := u.userService.GetOne(id)
+	if data.Id == 0 {
+		response := helpers.NewResponse(nil, http.StatusNotFound)
+		response.SendResponse(w)
+		return
+	}
+	response := helpers.NewResponse(data, http.StatusOK)
+	response.SendResponse(w)
 }
 
 func (u *UserRoutes) Register(w http.ResponseWriter, r *http.Request) {
@@ -81,10 +87,40 @@ func (u *UserRoutes) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	user.Password = string(hashedPassword)
 	u.userService.Create(user)
+
+	response := helpers.NewResponse(nil, http.StatusCreated)
+	response.SendResponse(w)
 }
 
 func (u *UserRoutes) Login(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Login route from user")
+	w.Header().Set("Content-Type", "application/json")
+
+	body, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	var user models.User
+	if err = json.Unmarshal(body, &user); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	foundUser := u.userService.GetOneByUsername(user.Username)
+
+	if foundUser.Id == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(user.Password)); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	response := helpers.NewResponse("Logado", http.StatusOK)
+	response.SendResponse(w)
 }
 
 func (u *UserRoutes) verifyUserByUsername(username string) bool {
