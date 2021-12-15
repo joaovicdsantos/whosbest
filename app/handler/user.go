@@ -10,6 +10,7 @@ import (
 
 	"github.com/joaovicdsantos/whosbest-api/app/models"
 	"github.com/joaovicdsantos/whosbest-api/app/services"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -67,9 +68,30 @@ func (u *UserRoutes) Register(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	if u.verifyUserByUsername(user.Username) {
+		w.WriteHeader(http.StatusConflict)
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	user.Password = string(hashedPassword)
 	u.userService.Create(user)
 }
 
 func (u *UserRoutes) Login(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Login route from user")
+}
+
+func (u *UserRoutes) verifyUserByUsername(username string) bool {
+	user := u.userService.GetOneByUsername(username)
+	if user.Id != 0 {
+		return true
+	} else {
+		return false
+	}
 }
