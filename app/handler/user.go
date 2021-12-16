@@ -54,7 +54,7 @@ func (u *UserRoutes) GetOne(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(fmt.Sprint(helpers.GetUrlParam(r.URL.Path, getOneRe)))
 	data := u.userService.GetOne(id)
 	if data.Id == 0 {
-		response := helpers.NewResponse(nil, http.StatusNotFound)
+		response := helpers.NewResponseError("User not found", http.StatusNotFound)
 		response.SendResponse(w)
 		return
 	}
@@ -66,26 +66,32 @@ func (u *UserRoutes) Register(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		response := helpers.NewResponseError("Invalid requisition body", http.StatusBadRequest)
+		response.SendResponse(w)
 		return
 	}
 	var user models.User
 	if err = json.Unmarshal(body, &user); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		response := helpers.NewResponseError("Invalid requisition body", http.StatusBadRequest)
+		response.SendResponse(w)
 		return
 	}
 
 	if u.verifyUserByUsername(user.Username) {
-		w.WriteHeader(http.StatusConflict)
+		response := helpers.NewResponseError("User already exists", http.StatusConflict)
+		response.SendResponse(w)
 		return
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		response := helpers.NewResponseError("Internal error in the server consult the admin", http.StatusInternalServerError)
+		response.SendResponse(w)
 		return
 	}
+
 	user.Password = string(hashedPassword)
+
 	u.userService.Create(user)
 
 	response := helpers.NewResponse(nil, http.StatusCreated)
@@ -98,24 +104,28 @@ func (u *UserRoutes) Login(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		response := helpers.NewResponseError("Invalid requisition body", http.StatusBadRequest)
+		response.SendResponse(w)
 		return
 	}
 	var user models.User
 	if err = json.Unmarshal(body, &user); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		response := helpers.NewResponseError("Invalid requisition body", http.StatusBadRequest)
+		response.SendResponse(w)
 		return
 	}
 
 	foundUser := u.userService.GetOneByUsername(user.Username)
-
 	if foundUser.Id == 0 {
-		w.WriteHeader(http.StatusBadRequest)
+		response := helpers.NewResponseError("Invalid password or user", http.StatusUnauthorized)
+		response.SendResponse(w)
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(user.Password)); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	err = bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(user.Password))
+	if err != nil {
+		response := helpers.NewResponseError("Invalid password or user", http.StatusUnauthorized)
+		response.SendResponse(w)
 		return
 	}
 
