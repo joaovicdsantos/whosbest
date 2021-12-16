@@ -24,6 +24,7 @@ var (
 type UserRoutes struct {
 	DB          *sql.DB
 	userService *services.UserService
+	Payload     interface{}
 }
 
 func (u *UserRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -31,6 +32,28 @@ func (u *UserRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		DB: u.DB,
 	}
 	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == http.MethodPost && registerRe.MatchString(r.URL.Path) {
+		u.Register(w, r)
+		return
+	}
+
+	unparsedToken, ok := r.Header["Authorization"]
+	if !ok {
+		response := helpers.NewResponseError("Token is not valid", http.StatusUnauthorized)
+		response.SendResponse(w)
+		return
+	}
+
+	var err error
+	u.Payload, err = helpers.ParseJwtToken(fmt.Sprint(unparsedToken[0]))
+	if err != nil {
+		response := helpers.NewResponseError(err.Error(), http.StatusUnauthorized)
+		response.SendResponse(w)
+		return
+	}
+
+	// Authorized routes
 	switch {
 	case r.Method == http.MethodGet && getAllRe.MatchString(r.URL.Path):
 		u.GetAll(w, r)
@@ -38,9 +61,9 @@ func (u *UserRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case r.Method == http.MethodGet && getOneRe.MatchString(r.URL.Path):
 		u.GetOne(w, r)
 		break
-	case r.Method == http.MethodPost && registerRe.MatchString(r.URL.Path):
-		u.Register(w, r)
-		break
+	default:
+		response := helpers.NewResponseError("Method not allowed", http.StatusMethodNotAllowed)
+		response.SendResponse(w)
 	}
 }
 
@@ -99,6 +122,9 @@ func (u *UserRoutes) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserRoutes) Login(w http.ResponseWriter, r *http.Request) {
+	u.userService = &services.UserService{
+		DB: u.DB,
+	}
 	w.Header().Set("Content-Type", "application/json")
 
 	body, err := ioutil.ReadAll(r.Body)
@@ -129,7 +155,14 @@ func (u *UserRoutes) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := helpers.NewResponse("Logado", http.StatusOK)
+	token, err := helpers.CreateJwtToken(user)
+	if err != nil {
+		response := helpers.NewResponseError("Unable to generate access token", http.StatusInternalServerError)
+		response.SendResponse(w)
+		return
+	}
+
+	response := helpers.NewResponse(token, http.StatusOK)
 	response.SendResponse(w)
 }
 
