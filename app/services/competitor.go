@@ -31,6 +31,10 @@ func (s *CompetitorService) GetAll() ([]models.Competitor, error) {
 		competitors = append(competitors, competitor)
 	}
 
+	if competitors == nil {
+		competitors = []models.Competitor{}
+	}
+
 	return competitors, nil
 }
 

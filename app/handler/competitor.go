@@ -110,7 +110,7 @@ func (c *CompetitorRoutes) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	leaderboardId := c.getLeadboard(competitor.LeaderboardId).Id
+	leaderboardId := c.getLeaderboard(competitor.LeaderboardId).Id
 	if leaderboardId == 0 {
 		response := helpers.NewResponseError(fmt.Sprintf("Leaderboard id %d invalid", competitor.LeaderboardId), http.StatusNotFound)
 		response.SendResponse(w)
@@ -118,7 +118,7 @@ func (c *CompetitorRoutes) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userId := helpers.GetCurrentUser(c.Payload, c.DB).Id
-	creatorLeadboardId := c.getLeadboard(leaderboardId).Creator.Id
+	creatorLeadboardId := c.getLeaderboard(leaderboardId).Creator.Id
 	if creatorLeadboardId != userId {
 		response := helpers.NewResponseError("You are not authorized for this", http.StatusForbidden)
 		response.SendResponse(w)
@@ -141,7 +141,7 @@ func (c *CompetitorRoutes) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userId := helpers.GetCurrentUser(c.Payload, c.DB).Id
-	creatorLeadboardId := c.getLeadboard(data.LeaderboardId).Creator.Id
+	creatorLeadboardId := c.getLeaderboard(data.LeaderboardId).Creator.Id
 	if creatorLeadboardId != userId {
 		response := helpers.NewResponseError("You are not authorized for this", http.StatusForbidden)
 		response.SendResponse(w)
@@ -177,8 +177,10 @@ func (c *CompetitorRoutes) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userId := helpers.GetCurrentUser(c.Payload, c.DB).Id
-	creatorLeadboardId := c.getLeadboard(data.LeaderboardId).Creator.Id
-	if creatorLeadboardId != userId {
+	creatorLeaderboardId := c.getLeaderboard(data.LeaderboardId).Creator.Id
+	fmt.Print(userId, creatorLeaderboardId)
+
+	if creatorLeaderboardId != userId {
 		response := helpers.NewResponseError("You are not authorized for this", http.StatusForbidden)
 		response.SendResponse(w)
 		return
@@ -195,7 +197,7 @@ func (c *CompetitorRoutes) Delete(w http.ResponseWriter, r *http.Request) {
 	response.SendResponse(w)
 }
 
-func (c *CompetitorRoutes) getLeadboard(id int) models.Leaderboard {
+func (c *CompetitorRoutes) getLeaderboard(id int) models.Leaderboard {
 	var leaderboardService services.LeaderboardService
 
 	leaderboardService.DB = c.DB

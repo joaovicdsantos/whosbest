@@ -31,6 +31,10 @@ func (s *UserService) GetAll() ([]models.User, error) {
 		users = append(users, user)
 	}
 
+	if users == nil {
+		users = []models.User{}
+	}
+
 	return users, nil
 }
 

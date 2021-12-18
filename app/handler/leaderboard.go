@@ -17,7 +17,7 @@ var (
 	leaderboardGetOneRe = regexp.MustCompile(`^\/leaderboard\/(\d+)$`)
 	leaderboardCreateRe = leaderboardGetAllRe
 	leaderboardUpdateRe = leaderboardGetOneRe
-	leaderbaordDeleteRe = leaderboardGetOneRe
+	leaderboardDeleteRe = leaderboardGetOneRe
 )
 
 type LeaderboardRoutes struct {
@@ -69,7 +69,7 @@ func (l *LeaderboardRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case r.Method == http.MethodPut && leaderboardGetOneRe.MatchString(r.URL.Path):
 		l.Update(w, r)
 		break
-	case r.Method == http.MethodDelete && leaderbaordDeleteRe.MatchString(r.URL.Path):
+	case r.Method == http.MethodDelete && leaderboardDeleteRe.MatchString(r.URL.Path):
 		l.Delete(w, r)
 		break
 	default:
@@ -129,7 +129,6 @@ func (l *LeaderboardRoutes) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userId := helpers.GetCurrentUser(l.Payload, l.DB).Id
-
 	if data.Creator.Id != userId {
 		response := helpers.NewResponseError("You are not authorized for this", http.StatusForbidden)
 		response.SendResponse(w)
@@ -164,6 +163,13 @@ func (l *LeaderboardRoutes) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userId := helpers.GetCurrentUser(l.Payload, l.DB).Id
+	if data.Creator.Id != userId {
+		response := helpers.NewResponseError("You are not authorized for this", http.StatusForbidden)
+		response.SendResponse(w)
+		return
+	}
+
 	err := l.leaderboardService.Delete(data)
 	if err != nil {
 		response := helpers.NewResponseError(err.Error(), http.StatusInternalServerError)
@@ -171,6 +177,6 @@ func (l *LeaderboardRoutes) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := helpers.NewResponse("Created", http.StatusNoContent)
+	response := helpers.NewResponse("Deleted", http.StatusNoContent)
 	response.SendResponse(w)
 }
