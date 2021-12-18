@@ -24,6 +24,11 @@ func (a *App) SetRoutes(db *sql.DB) {
 	a.mux.Handle("/user", userRoutes)
 	a.mux.Handle("/user/", userRoutes)
 	a.mux.HandleFunc("/login", userRoutes.Login)
+
+	leaderboardRoutes := new(handler.LeaderboardRoutes)
+	leaderboardRoutes.DB = db
+	a.mux.Handle("/leaderboard", leaderboardRoutes)
+	a.mux.Handle("/leaderboard/", leaderboardRoutes)
 }
 
 func (a *App) Run() {

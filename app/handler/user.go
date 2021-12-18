@@ -2,9 +2,7 @@ package handler
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -16,15 +14,15 @@ import (
 )
 
 var (
-	getAllRe   = regexp.MustCompile(`^\/user[\/]*$`)
-	getOneRe   = regexp.MustCompile(`^\/user\/(\d+)$`)
-	registerRe = regexp.MustCompile(`^\/user[\/]*$`)
+	userGetAllRe   = regexp.MustCompile(`^\/user[\/]*$`)
+	userGetOneRe   = regexp.MustCompile(`^\/user\/(\d+)$`)
+	userRegisterRe = regexp.MustCompile(`^\/user[\/]*$`)
 )
 
 type UserRoutes struct {
 	DB          *sql.DB
 	userService *services.UserService
-	Payload     interface{}
+	Payload     map[string]interface{}
 }
 
 func (u *UserRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +31,7 @@ func (u *UserRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 
-	if r.Method == http.MethodPost && registerRe.MatchString(r.URL.Path) {
+	if r.Method == http.MethodPost && userRegisterRe.MatchString(r.URL.Path) {
 		u.Register(w, r)
 		return
 	}
@@ -53,12 +51,19 @@ func (u *UserRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user := helpers.GetCurrentUser(u.Payload, u.DB)
+	if user.Id == 0 {
+		response := helpers.NewResponseError("Invalid user", http.StatusUnauthorized)
+		response.SendResponse(w)
+		return
+
+	}
 	// Authorized routes
 	switch {
-	case r.Method == http.MethodGet && getAllRe.MatchString(r.URL.Path):
+	case r.Method == http.MethodGet && userGetAllRe.MatchString(r.URL.Path):
 		u.GetAll(w, r)
 		break
-	case r.Method == http.MethodGet && getOneRe.MatchString(r.URL.Path):
+	case r.Method == http.MethodGet && userGetOneRe.MatchString(r.URL.Path):
 		u.GetOne(w, r)
 		break
 	default:
@@ -68,13 +73,18 @@ func (u *UserRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserRoutes) GetAll(w http.ResponseWriter, r *http.Request) {
-	data := u.userService.GetAll()
+	data, err := u.userService.GetAll()
+	if err != nil {
+		response := helpers.NewResponseError(err.Error(), http.StatusInternalServerError)
+		response.SendResponse(w)
+		return
+	}
 	response := helpers.NewResponse(data, http.StatusOK)
 	response.SendResponse(w)
 }
 
 func (u *UserRoutes) GetOne(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(fmt.Sprint(helpers.GetUrlParam(r.URL.Path, getOneRe)))
+	id, _ := strconv.Atoi(fmt.Sprint(helpers.GetUrlParam(r.URL.Path, userGetOneRe)))
 	data := u.userService.GetOne(id)
 	if data.Id == 0 {
 		response := helpers.NewResponseError("User not found", http.StatusNotFound)
@@ -86,16 +96,10 @@ func (u *UserRoutes) GetOne(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserRoutes) Register(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
-	if err != nil {
-		response := helpers.NewResponseError("Invalid requisition body", http.StatusBadRequest)
-		response.SendResponse(w)
-		return
-	}
-	var user models.User
-	if err = json.Unmarshal(body, &user); err != nil {
-		response := helpers.NewResponseError("Invalid requisition body", http.StatusBadRequest)
+	var user models.UserInput
+
+	if err := helpers.ParseBodyToStruct(r, &user); err != nil {
+		response := helpers.NewResponseError(err.Error(), http.StatusBadRequest)
 		response.SendResponse(w)
 		return
 	}
@@ -115,7 +119,16 @@ func (u *UserRoutes) Register(w http.ResponseWriter, r *http.Request) {
 
 	user.Password = string(hashedPassword)
 
-	u.userService.Create(user)
+	err = u.userService.Create(models.User{
+		Id:       user.Id,
+		Username: user.Username,
+		Password: user.Password,
+	})
+	if err != nil {
+		response := helpers.NewResponseError(err.Error(), http.StatusInternalServerError)
+		response.SendResponse(w)
+		return
+	}
 
 	response := helpers.NewResponse(nil, http.StatusCreated)
 	response.SendResponse(w)
@@ -127,16 +140,10 @@ func (u *UserRoutes) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 
-	body, err := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
-	if err != nil {
-		response := helpers.NewResponseError("Invalid requisition body", http.StatusBadRequest)
-		response.SendResponse(w)
-		return
-	}
-	var user models.User
-	if err = json.Unmarshal(body, &user); err != nil {
-		response := helpers.NewResponseError("Invalid requisition body", http.StatusBadRequest)
+	var user models.UserInput
+
+	if err := helpers.ParseBodyToStruct(r, &user); err != nil {
+		response := helpers.NewResponseError(err.Error(), http.StatusBadRequest)
 		response.SendResponse(w)
 		return
 	}
@@ -148,14 +155,18 @@ func (u *UserRoutes) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(user.Password))
+	err := bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(user.Password))
 	if err != nil {
 		response := helpers.NewResponseError("Invalid password or user", http.StatusUnauthorized)
 		response.SendResponse(w)
 		return
 	}
 
-	token, err := helpers.CreateJwtToken(user)
+	token, err := helpers.CreateJwtToken(models.User{
+		Id:       user.Id,
+		Username: user.Username,
+		Password: user.Password,
+	})
 	if err != nil {
 		response := helpers.NewResponseError("Unable to generate access token", http.StatusInternalServerError)
 		response.SendResponse(w)

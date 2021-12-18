@@ -11,32 +11,34 @@ type UserService struct {
 	DB *sql.DB
 }
 
-func (u *UserService) GetAll() []models.User {
+func (s *UserService) GetAll() ([]models.User, error) {
+	var users []models.User
+
 	sql := "SELECT * FROM Users"
-	result, err := u.DB.Query(sql)
+	result, err := s.DB.Query(sql)
 	if err != nil {
-		panic("SQL ERROR")
+		return []models.User{}, fmt.Errorf("Error querying all users")
 	}
 
-	var users []models.User
 	for result.Next() {
 		var user models.User
 
 		err = result.Scan(&user.Id, &user.Username, &user.Password)
 		if err != nil {
-			panic("SQL ERROR")
+			return []models.User{}, fmt.Errorf("Error querying all users")
 		}
 
 		users = append(users, user)
 	}
 
-	return users
+	return users, nil
 }
 
-func (u *UserService) GetOne(id int) models.User {
+func (s *UserService) GetOne(id int) models.User {
+	var user models.User
+
 	sql := "SELECT * FROM Users WHERE Id = $1"
-	var user models.User
-	err := u.DB.QueryRow(sql, id).Scan(&user.Id, &user.Username, &user.Password)
+	err := s.DB.QueryRow(sql, id).Scan(&user.Id, &user.Username, &user.Password)
 	if err != nil {
 		return models.User{}
 	}
@@ -44,11 +46,11 @@ func (u *UserService) GetOne(id int) models.User {
 	return user
 }
 
-func (u *UserService) GetOneByUsername(username string) models.User {
+func (s *UserService) GetOneByUsername(username string) models.User {
+	var user models.User
+
 	sql := "SELECT * FROM Users WHERE Username = $1"
-
-	var user models.User
-	err := u.DB.QueryRow(sql, username).Scan(&user.Id, &user.Username, &user.Password)
+	err := s.DB.QueryRow(sql, username).Scan(&user.Id, &user.Username, &user.Password)
 	if err != nil {
 		return models.User{}
 	}
@@ -56,15 +58,15 @@ func (u *UserService) GetOneByUsername(username string) models.User {
 	return user
 }
 
-func (u *UserService) Create(user models.User) {
+func (s *UserService) Create(user models.User) error {
 	sql := "INSERT INTO Users (username, password) VALUES ($1, $2)"
-	insert, err := u.DB.Prepare(sql)
+	insert, err := s.DB.Prepare(sql)
 	if err != nil {
-		panic("SQL ERROR")
+		return fmt.Errorf("Error creating user")
 	}
-	result, err := insert.Exec(user.Username, user.Password)
+	_, err = insert.Exec(user.Username, user.Password)
 	if err != nil {
-		panic("SQL ERROR")
+		return fmt.Errorf("Error creating user")
 	}
-	fmt.Println(result)
+	return nil
 }
