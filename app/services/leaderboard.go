@@ -30,6 +30,7 @@ func (s *LeaderboardService) GetAll() ([]models.Leaderboard, error) {
 		}
 
 		s.loadUser(&leaderboard, creatorId)
+		s.loadCompetitors(&leaderboard)
 
 		leaderboards = append(leaderboards, leaderboard)
 	}
@@ -52,6 +53,7 @@ func (s *LeaderboardService) GetOne(id int) models.Leaderboard {
 	}
 
 	s.loadUser(&leaderboard, creatorId)
+	s.loadCompetitors(&leaderboard)
 
 	return leaderboard
 }
@@ -100,4 +102,11 @@ func (s *LeaderboardService) loadUser(leaderboard *models.Leaderboard, id int) {
 	userService.DB = s.DB
 	user := userService.GetOne(id)
 	leaderboard.Creator = &user
+}
+
+func (s *LeaderboardService) loadCompetitors(leaderboard *models.Leaderboard) {
+	var competitorService CompetitorService
+	competitorService.DB = s.DB
+	competitors, _ := competitorService.GetAllByLeaderboardId(leaderboard.Id)
+	leaderboard.Competitors = &competitors
 }

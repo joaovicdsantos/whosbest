@@ -5,7 +5,7 @@ type Leaderboard struct {
 	Title       string        `json:"title"`
 	Description string        `json:"description"`
 	Creator     *User         `json:"creator"`
-	Competitors []*Competitor `json:"competitors"`
+	Competitors *[]Competitor `json:"competitors"`
 }
 
 func (l *Leaderboard) Update(leaderboard Leaderboard) {

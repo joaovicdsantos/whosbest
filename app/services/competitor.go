@@ -38,6 +38,33 @@ func (s *CompetitorService) GetAll() ([]models.Competitor, error) {
 	return competitors, nil
 }
 
+func (s *CompetitorService) GetAllByLeaderboardId(id int) ([]models.Competitor, error) {
+	var competitors []models.Competitor
+
+	sql := "SELECT * FROM Competitors WHERE id = $1"
+
+	result, err := s.DB.Query(sql, id)
+	if err != nil {
+		return []models.Competitor{}, fmt.Errorf("Error querying all competitor by leaderboardId")
+	}
+
+	for result.Next() {
+		var competitor models.Competitor
+
+		err = result.Scan(&competitor.Id, &competitor.Title, &competitor.Description, &competitor.ImageURL, &competitor.Votes, &competitor.LeaderboardId)
+		if err != nil {
+			return []models.Competitor{}, fmt.Errorf("Error querying all competitor by leaderboardId")
+		}
+
+		competitors = append(competitors, competitor)
+	}
+
+	if competitors == nil {
+		competitors = []models.Competitor{}
+	}
+
+	return competitors, nil
+}
 func (s *CompetitorService) GetOne(id int) models.Competitor {
 	var competitor models.Competitor
 
