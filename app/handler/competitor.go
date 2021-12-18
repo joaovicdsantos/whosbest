@@ -18,6 +18,7 @@ var (
 	competitorCreateRe = competitorGetAllRe
 	competitorUpdateRe = competitorGetOneRe
 	competitorDeleteRe = competitorGetOneRe
+	competitorVoteRe   = regexp.MustCompile(`^\/competitor\/(\d+)\/vote$`)
 )
 
 type CompetitorRoutes struct {
@@ -52,7 +53,6 @@ func (c *CompetitorRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		response := helpers.NewResponseError("Invalid user", http.StatusUnauthorized)
 		response.SendResponse(w)
 		return
-
 	}
 
 	// Authorized routes
@@ -71,6 +71,9 @@ func (c *CompetitorRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		break
 	case r.Method == http.MethodDelete && competitorDeleteRe.MatchString(r.URL.Path):
 		c.Delete(w, r)
+		break
+	case r.Method == http.MethodPost && competitorVoteRe.MatchString(r.URL.Path):
+		c.Vote(w, r)
 		break
 	default:
 		response := helpers.NewResponseError("Method not allowed", http.StatusMethodNotAllowed)
@@ -195,6 +198,27 @@ func (c *CompetitorRoutes) Delete(w http.ResponseWriter, r *http.Request) {
 
 	response := helpers.NewResponse("Deleted", http.StatusNoContent)
 	response.SendResponse(w)
+}
+
+func (c *CompetitorRoutes) Vote(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(fmt.Sprint(helpers.GetUrlParam(r.URL.Path, competitorVoteRe)))
+	data := c.competitorService.GetOne(id)
+	if data.Id == 0 {
+		response := helpers.NewResponseError("Competitor not found", http.StatusNotFound)
+		response.SendResponse(w)
+		return
+	}
+
+	err := c.competitorService.Vote(data)
+	if err != nil {
+		response := helpers.NewResponseError(err.Error(), http.StatusInternalServerError)
+		response.SendResponse(w)
+		return
+	}
+
+	response := helpers.NewResponse("Voted", http.StatusAccepted)
+	response.SendResponse(w)
+	return
 }
 
 func (c *CompetitorRoutes) getLeaderboard(id int) models.Leaderboard {

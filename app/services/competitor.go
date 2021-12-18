@@ -115,3 +115,16 @@ func (s *CompetitorService) Delete(competitor models.Competitor) error {
 	}
 	return nil
 }
+
+func (s *CompetitorService) Vote(competitor models.Competitor) error {
+	sql := "UPDATE Competitors SET Votes = Votes + 1 WHERE Id = $1"
+	del, err := s.DB.Prepare(sql)
+	if err != nil {
+		return fmt.Errorf("Error voting for competitor")
+	}
+	_, err = del.Exec(competitor.Id)
+	if err != nil {
+		return fmt.Errorf("Error voting for competitor")
+	}
+	return nil
+}
