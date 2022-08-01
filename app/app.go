@@ -5,7 +5,10 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/joaovicdsantos/whosbest-api/app/graphql"
 	"github.com/joaovicdsantos/whosbest-api/app/handler"
+	"github.com/joaovicdsantos/whosbest-api/app/helpers"
+	"github.com/joaovicdsantos/whosbest-api/app/models"
 )
 
 type App struct {
@@ -36,6 +39,19 @@ func (a *App) SetRoutes(db *sql.DB) {
 	competitorRoutes.DB = db
 	a.mux.Handle("/competitor", competitorRoutes)
 	a.mux.Handle("/competitor/", competitorRoutes)
+
+	var graphql = new(graphql.GraphQL)
+	graphql.Initialize(db)
+	a.mux.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
+		var graphqlIn models.GraphQL
+		if err := helpers.ParseBodyToStruct(r, &graphqlIn); err != nil {
+			response := helpers.NewResponseError(err.Error(), http.StatusBadRequest)
+			response.SendResponse(w)
+			return
+		}
+		response := helpers.NewResponse(graphql.ExecuteQuery(graphqlIn.Query), http.StatusOK)
+		response.SendResponse(w)
+	})
 }
 
 func (a *App) Run() {
