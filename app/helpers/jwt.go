@@ -26,7 +26,7 @@ func CreateJwtToken(user models.User) (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("%s %s", prefix, tokenString), nil
+	return fmt.Sprintf("%s", tokenString), nil
 }
 
 func ParseJwtToken(unparsedToken string) (map[string]interface{}, error) {

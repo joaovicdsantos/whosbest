@@ -62,10 +62,8 @@ func (u *UserRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method == http.MethodGet && userGetAllRe.MatchString(r.URL.Path):
 		u.GetAll(w, r)
-		break
 	case r.Method == http.MethodGet && userGetOneRe.MatchString(r.URL.Path):
 		u.GetOne(w, r)
-		break
 	default:
 		response := helpers.NewResponseError("Method not allowed", http.StatusMethodNotAllowed)
 		response.SendResponse(w)
