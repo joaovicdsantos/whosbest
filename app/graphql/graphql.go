@@ -21,13 +21,26 @@ func (g *GraphQL) Initialize(db *sql.DB) {
 }
 
 func (g *GraphQL) defineSchema(db *sql.DB) (graphql.Schema, error) {
+	competitorField := fields.CompetitorField{
+		DB: db,
+	}
 	return graphql.NewSchema(
 		graphql.SchemaConfig{
 			Query: graphql.NewObject(
 				graphql.ObjectConfig{
 					Name: "Core_Query",
 					Fields: graphql.Fields{
-						"competitors": fields.CompetitorField(db),
+						"competitor": competitorField.GetOne(),
+						"competitors": competitorField.GetAll(),
+					},
+				}),
+			Mutation: graphql.NewObject(
+				graphql.ObjectConfig{
+					Name: "Core_Mutation",
+					Fields: graphql.Fields{
+						"createCompetitor": competitorField.Create(),
+						"updateCompetitor": competitorField.Update(),
+						"deleteCompetitor": competitorField.Delete(),
 					},
 				}),
 		},

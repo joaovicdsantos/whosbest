@@ -18,6 +18,6 @@ create table Competitors (
     description text not null,
     imageUrl varchar(120) not null,
     votes integer not null,
-    leaderboardId integer not null,
-    constraint fk_leaderboard foreign key (leaderboardId) references Leaderboard(id)
+    leaderboard integer not null,
+    constraint fk_leaderboard foreign key (leaderboard) references Leaderboards(id)
 );

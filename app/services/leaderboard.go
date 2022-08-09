@@ -17,7 +17,7 @@ func (s *LeaderboardService) GetAll() ([]models.Leaderboard, error) {
 	sql := "SELECT * FROM Leaderboards"
 	result, err := s.DB.Query(sql)
 	if err != nil {
-		return []models.Leaderboard{}, fmt.Errorf("Error querying all leaderboard")
+		return []models.Leaderboard{}, fmt.Errorf("error querying all leaderboard")
 	}
 
 	for result.Next() {
@@ -26,7 +26,7 @@ func (s *LeaderboardService) GetAll() ([]models.Leaderboard, error) {
 
 		err = result.Scan(&leaderboard.Id, &leaderboard.Title, &leaderboard.Description, &creatorId)
 		if err != nil {
-			return []models.Leaderboard{}, fmt.Errorf("Error querying all leaderboard")
+			return []models.Leaderboard{}, fmt.Errorf("error querying all leaderboard")
 		}
 
 		s.loadUser(&leaderboard, creatorId)
@@ -59,14 +59,14 @@ func (s *LeaderboardService) GetOne(id int) models.Leaderboard {
 }
 
 func (s *LeaderboardService) Create(leaderboard models.Leaderboard) error {
-	sql := "INSERT INTO Leaderboards (title, description, creatorId) VALUES ($1, $2, $3)"
+	sql := "INSERT INTO Leaderboards (title, description, creator) VALUES ($1, $2, $3)"
 	insert, err := s.DB.Prepare(sql)
 	if err != nil {
-		return fmt.Errorf("Error creating leaderboard")
+		return fmt.Errorf("error creating leaderboard")
 	}
 	_, err = insert.Exec(leaderboard.Title, leaderboard.Description, leaderboard.Creator.Id)
 	if err != nil {
-		return fmt.Errorf("Error creating leaderboard")
+		return fmt.Errorf("error creating leaderboard")
 	}
 	return nil
 }
@@ -75,11 +75,11 @@ func (s *LeaderboardService) Update(leaderboard models.Leaderboard) error {
 	sql := "UPDATE Leaderboards SET title = $1, description = $2 WHERE Id = $3"
 	update, err := s.DB.Prepare(sql)
 	if err != nil {
-		return fmt.Errorf("Error updating leaderboard")
+		return fmt.Errorf("error updating leaderboard")
 	}
 	_, err = update.Exec(leaderboard.Title, leaderboard.Description, leaderboard.Id)
 	if err != nil {
-		return fmt.Errorf("Error updating leaderboard")
+		return fmt.Errorf("error updating leaderboard")
 	}
 	return nil
 }
@@ -88,11 +88,11 @@ func (s *LeaderboardService) Delete(leaderboard models.Leaderboard) error {
 	sql := "DELETE FROM Leaderboards WHERE Id = $1"
 	del, err := s.DB.Prepare(sql)
 	if err != nil {
-		return fmt.Errorf("Error deleting leaderboard")
+		return fmt.Errorf("error deleting leaderboard")
 	}
 	_, err = del.Exec(leaderboard.Id)
 	if err != nil {
-		return fmt.Errorf("Error deleting leaderboard")
+		return fmt.Errorf("error deleting leaderboard")
 	}
 	return nil
 }
