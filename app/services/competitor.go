@@ -3,6 +3,7 @@ package services
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/joaovicdsantos/whosbest-api/app/models"
 )
@@ -77,30 +78,54 @@ func (s *CompetitorService) GetOne(id int) models.Competitor {
 	return competitor
 }
 
-func (s *CompetitorService) Create(competitor models.Competitor) error {
-	sql := "INSERT INTO Competitors (title, description, imageUrl, votes, leaderboard) VALUES ($1, $2, $3, 0, $4)"
+func (s *CompetitorService) Create(competitor models.Competitor) (models.Competitor, error) {
+	sql := "INSERT INTO Competitors (title, description, imageUrl, votes, leaderboard) VALUES ($1, $2, $3, 0, $4) RETURNING id"
 	insert, err := s.DB.Prepare(sql)
 	if err != nil {
-		return fmt.Errorf("error creating competitor")
+		return models.Competitor{}, fmt.Errorf("error creating competitor")
 	}
-	_, err = insert.Exec(competitor.Title, competitor.Description, competitor.ImageURL, competitor.Leaderboard)
+	
+	err = insert.QueryRow(competitor.Title, competitor.Description, competitor.ImageURL, competitor.Leaderboard).Scan(&competitor.Id)
 	if err != nil {
-		return fmt.Errorf("error creating competitor")
+		return models.Competitor{}, fmt.Errorf("error creating competitor")
 	}
-	return nil
+
+	return competitor, nil
 }
 
-func (s *CompetitorService) Update(competitor models.Competitor) error {
+func (s *CompetitorService) Update(competitor models.Competitor) (models.Competitor, error) {
 	sql := "UPDATE Competitors SET title = $1, description = $2, imageurl = $3 WHERE Id = $4"
+	
+	current := s.GetOne(competitor.Id)
+
+	if len(strings.Trim(competitor.Title, "")) > 0 {
+		current.Title = competitor.Title
+	}
+
+	if len(strings.Trim(competitor.Description, "")) > 0 {
+		current.Description = competitor.Description
+	}
+
+	if len(strings.Trim(competitor.ImageURL, "")) > 0 {
+		current.ImageURL = competitor.ImageURL
+	}
+	
 	update, err := s.DB.Prepare(sql)
 	if err != nil {
-		return fmt.Errorf("error updating competitor")
+		return models.Competitor{}, fmt.Errorf("error updating competitor")
 	}
-	_, err = update.Exec(competitor.Title, competitor.Description, competitor.ImageURL, competitor.Id)
+
+	_, err = update.Exec(
+		current.Title,
+		current.Description,
+		current.ImageURL,
+		competitor.Id,
+	)
 	if err != nil {
-		return fmt.Errorf("error updating competitor")
+		return models.Competitor{}, fmt.Errorf("error updating competitor")
 	}
-	return nil
+
+	return current, nil
 }
 
 func (s *CompetitorService) Delete(competitor models.Competitor) error {

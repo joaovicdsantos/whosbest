@@ -21,11 +21,22 @@ func ParseBodyToStruct(r *http.Request, model interface{}) error {
 	body, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		return fmt.Errorf("Invalid requisition body")
+		return fmt.Errorf("invalid requisition body")
 	}
 
 	if err = json.Unmarshal(body, model); err != nil {
-		return fmt.Errorf("Invalid requisition body")
+		return fmt.Errorf("invalid requisition body")
+	}
+	return nil
+}
+
+func ParseMapToStruct(genericMap map[string]interface{}, model interface{}) error {
+	jsonBody, err := json.Marshal(genericMap)
+	if err != nil {
+		return fmt.Errorf("invalid generic map")
+	}
+	if err = json.Unmarshal(jsonBody, model); err != nil {
+		return fmt.Errorf("invalid generic map")
 	}
 	return nil
 }

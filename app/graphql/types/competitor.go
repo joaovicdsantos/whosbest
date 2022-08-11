@@ -21,7 +21,7 @@ var CompetitorType = graphql.NewObject(
 			"votes": &graphql.Field{
 				Type: graphql.Int,
 			},
-			"leaderboard_id": &graphql.Field{
+			"leaderboard": &graphql.Field{
 				Type: graphql.Int,
 			},
 		},

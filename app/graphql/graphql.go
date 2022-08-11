@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -47,10 +48,12 @@ func (g *GraphQL) defineSchema(db *sql.DB) (graphql.Schema, error) {
 	)
 }
 
-func (g *GraphQL) ExecuteQuery(query string) *graphql.Result {
+func (g *GraphQL) ExecuteQuery(query string, userId int) *graphql.Result {
+	ctx := context.WithValue(context.Background(), "user_id", userId)
 	result := graphql.Do(graphql.Params{
 		Schema:        g.Schema,
 		RequestString: query,
+		Context:       ctx,
 	})
 	if len(result.Errors) > 0 {
 		fmt.Printf("wrong result, unexpected errors: %v", result.Errors)
