@@ -84,7 +84,7 @@ func (s *CompetitorService) Create(competitor models.Competitor) (models.Competi
 	if err != nil {
 		return models.Competitor{}, fmt.Errorf("error creating competitor")
 	}
-	
+
 	err = insert.QueryRow(competitor.Title, competitor.Description, competitor.ImageURL, competitor.Leaderboard).Scan(&competitor.Id)
 	if err != nil {
 		return models.Competitor{}, fmt.Errorf("error creating competitor")
@@ -95,7 +95,7 @@ func (s *CompetitorService) Create(competitor models.Competitor) (models.Competi
 
 func (s *CompetitorService) Update(competitor models.Competitor) (models.Competitor, error) {
 	sql := "UPDATE Competitors SET title = $1, description = $2, imageurl = $3 WHERE Id = $4"
-	
+
 	current := s.GetOne(competitor.Id)
 
 	if len(strings.Trim(competitor.Title, "")) > 0 {
@@ -109,7 +109,7 @@ func (s *CompetitorService) Update(competitor models.Competitor) (models.Competi
 	if len(strings.Trim(competitor.ImageURL, "")) > 0 {
 		current.ImageURL = competitor.ImageURL
 	}
-	
+
 	update, err := s.DB.Prepare(sql)
 	if err != nil {
 		return models.Competitor{}, fmt.Errorf("error updating competitor")

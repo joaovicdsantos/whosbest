@@ -22,26 +22,34 @@ func (g *GraphQL) Initialize(db *sql.DB) {
 }
 
 func (g *GraphQL) defineSchema(db *sql.DB) (graphql.Schema, error) {
-	competitorField := fields.CompetitorField{
-		DB: db,
-	}
+	competitorField := fields.NewCompetitorField(db)
+	leaderboardField := fields.NewLeaderboardField(db)
+	userField := fields.NewUserField(db)
+
 	return graphql.NewSchema(
 		graphql.SchemaConfig{
 			Query: graphql.NewObject(
 				graphql.ObjectConfig{
 					Name: "Core_Query",
 					Fields: graphql.Fields{
-						"competitor": competitorField.GetOne(),
-						"competitors": competitorField.GetAll(),
+						"competitor":   competitorField.GetOne(),
+						"competitors":  competitorField.GetAll(),
+						"leaderboard":  leaderboardField.GetOne(),
+						"leaderboards": leaderboardField.GetAll(),
+						"user":         userField.GetOne(),
+						"users":        userField.GetAll(),
 					},
 				}),
 			Mutation: graphql.NewObject(
 				graphql.ObjectConfig{
 					Name: "Core_Mutation",
 					Fields: graphql.Fields{
-						"createCompetitor": competitorField.Create(),
-						"updateCompetitor": competitorField.Update(),
-						"deleteCompetitor": competitorField.Delete(),
+						"createCompetitor":  competitorField.Create(),
+						"updateCompetitor":  competitorField.Update(),
+						"deleteCompetitor":  competitorField.Delete(),
+						"createLeaderboard": leaderboardField.Create(),
+						"updateLeaderboard": leaderboardField.Update(),
+						"deleteLeaderboard": leaderboardField.Delete(),
 					},
 				}),
 		},

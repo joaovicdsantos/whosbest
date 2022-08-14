@@ -2,10 +2,8 @@ package handler
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 	"regexp"
-	"strconv"
 
 	"github.com/joaovicdsantos/whosbest-api/app/helpers"
 	"github.com/joaovicdsantos/whosbest-api/app/models"
@@ -22,78 +20,19 @@ var (
 type UserRoutes struct {
 	DB          *sql.DB
 	userService *services.UserService
-	Payload     map[string]interface{}
 }
 
-func (u *UserRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	u.userService = &services.UserService{
-		DB: u.DB,
+func NewUserRoutes(db *sql.DB) *UserRoutes {
+	return &UserRoutes{
+		DB: db,
+		userService: &services.UserService{
+			DB: db,
+		},
 	}
-	w.Header().Set("Content-Type", "application/json")
-
-	if r.Method == http.MethodPost && userRegisterRe.MatchString(r.URL.Path) {
-		u.Register(w, r)
-		return
-	}
-
-	unparsedToken, ok := r.Header["Authorization"]
-	if !ok {
-		response := helpers.NewResponseError("Token is not valid", http.StatusUnauthorized)
-		response.SendResponse(w)
-		return
-	}
-
-	var err error
-	u.Payload, err = helpers.ParseJwtToken(fmt.Sprint(unparsedToken[0]))
-	if err != nil {
-		response := helpers.NewResponseError(err.Error(), http.StatusUnauthorized)
-		response.SendResponse(w)
-		return
-	}
-
-	user := helpers.GetCurrentUser(u.Payload, u.DB)
-	if user.Id == 0 {
-		response := helpers.NewResponseError("Invalid user", http.StatusUnauthorized)
-		response.SendResponse(w)
-		return
-
-	}
-	// Authorized routes
-	switch {
-	case r.Method == http.MethodGet && userGetAllRe.MatchString(r.URL.Path):
-		u.GetAll(w, r)
-	case r.Method == http.MethodGet && userGetOneRe.MatchString(r.URL.Path):
-		u.GetOne(w, r)
-	default:
-		response := helpers.NewResponseError("Method not allowed", http.StatusMethodNotAllowed)
-		response.SendResponse(w)
-	}
-}
-
-func (u *UserRoutes) GetAll(w http.ResponseWriter, r *http.Request) {
-	data, err := u.userService.GetAll()
-	if err != nil {
-		response := helpers.NewResponseError(err.Error(), http.StatusInternalServerError)
-		response.SendResponse(w)
-		return
-	}
-	response := helpers.NewResponse(data, http.StatusOK)
-	response.SendResponse(w)
-}
-
-func (u *UserRoutes) GetOne(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(fmt.Sprint(helpers.GetUrlParam(r.URL.Path, userGetOneRe)))
-	data := u.userService.GetOne(id)
-	if data.Id == 0 {
-		response := helpers.NewResponseError("User not found", http.StatusNotFound)
-		response.SendResponse(w)
-		return
-	}
-	response := helpers.NewResponse(data, http.StatusOK)
-	response.SendResponse(w)
 }
 
 func (u *UserRoutes) Register(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	var user models.UserInput
 
 	if err := helpers.ParseBodyToStruct(r, &user); err != nil {
@@ -133,9 +72,6 @@ func (u *UserRoutes) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserRoutes) Login(w http.ResponseWriter, r *http.Request) {
-	u.userService = &services.UserService{
-		DB: u.DB,
-	}
 	w.Header().Set("Content-Type", "application/json")
 
 	var user models.UserInput

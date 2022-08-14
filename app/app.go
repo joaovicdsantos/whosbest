@@ -19,21 +19,12 @@ func (a *App) Initialize(db *sql.DB) {
 
 func (a *App) SetRoutes(db *sql.DB) {
 	// User routes
-	userRoutes := new(handler.UserRoutes)
-	userRoutes.DB = db
-	a.mux.Handle("/user", userRoutes)
-	a.mux.Handle("/user/", userRoutes)
+	userRoutes := handler.NewUserRoutes(db)
+	a.mux.HandleFunc("/register", userRoutes.Register)
 	a.mux.HandleFunc("/login", userRoutes.Login)
 
-	// Leaderboard routes
-	leaderboardRoutes := new(handler.LeaderboardRoutes)
-	leaderboardRoutes.DB = db
-	a.mux.Handle("/leaderboard", leaderboardRoutes)
-	a.mux.Handle("/leaderboard/", leaderboardRoutes)
-
 	// Graphql route
-	graphqlRoute := new(handler.GraphqlRoute)
-	graphqlRoute.DB = db
+	graphqlRoute := handler.GraphqlRoute{DB: db}
 	a.mux.HandleFunc("/graphql", graphqlRoute.HandleGraphqlRequest)
 }
 

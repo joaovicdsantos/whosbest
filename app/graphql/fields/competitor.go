@@ -12,7 +12,17 @@ import (
 )
 
 type CompetitorField struct {
-	DB *sql.DB
+	DB                *sql.DB
+	competitorService *services.CompetitorService
+}
+
+func NewCompetitorField(db *sql.DB) *CompetitorField {
+	return &CompetitorField{
+		DB: db,
+		competitorService: &services.CompetitorService{
+			DB: db,
+		},
+	}
 }
 
 func (cf *CompetitorField) GetOne() *graphql.Field {
@@ -20,16 +30,12 @@ func (cf *CompetitorField) GetOne() *graphql.Field {
 		Type: types.CompetitorType,
 		Args: graphql.FieldConfigArgument{
 			"id": &graphql.ArgumentConfig{
-				Type:         graphql.Int,
-				DefaultValue: 0,
+				Type: graphql.NewNonNull(graphql.Int),
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-			competitorService := &services.CompetitorService{
-				DB: cf.DB,
-			}
 			id, _ := p.Args["id"].(int)
-			competitor := competitorService.GetOne(id)
+			competitor := cf.competitorService.GetOne(id)
 			if competitor.Id == 0 {
 				return nil, fmt.Errorf("competitor not found")
 			}
@@ -42,10 +48,7 @@ func (cf *CompetitorField) GetAll() *graphql.Field {
 	return &graphql.Field{
 		Type: graphql.NewList(types.CompetitorType),
 		Resolve: func(_ graphql.ResolveParams) (interface{}, error) {
-			competitorService := &services.CompetitorService{
-				DB: cf.DB,
-			}
-			return competitorService.GetAll()
+			return cf.competitorService.GetAll()
 		},
 	}
 }
@@ -68,9 +71,6 @@ func (cf *CompetitorField) Create() *graphql.Field {
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-			competitorService := &services.CompetitorService{
-				DB: cf.DB,
-			}
 			userID := p.Context.Value("user_id").(int)
 			var competitor models.Competitor
 			if err := helpers.ParseMapToStruct(p.Args, &competitor); err != nil {
@@ -86,7 +86,10 @@ func (cf *CompetitorField) Create() *graphql.Field {
 				return nil, fmt.Errorf("you are not authorized for this")
 			}
 
-			createdCompetitor, _ := competitorService.Create(competitor)
+			createdCompetitor, err := cf.competitorService.Create(competitor)
+			if err != nil {
+				return nil, fmt.Errorf("error on competitor creation")
+			}
 
 			return createdCompetitor, nil
 		},
@@ -114,9 +117,6 @@ func (cf *CompetitorField) Update() *graphql.Field {
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-			competitorService := &services.CompetitorService{
-				DB: cf.DB,
-			}
 			userID := p.Context.Value("user_id").(int)
 			var competitor models.Competitor
 			if err := helpers.ParseMapToStruct(p.Args, &competitor); err != nil {
@@ -127,9 +127,9 @@ func (cf *CompetitorField) Update() *graphql.Field {
 				return nil, fmt.Errorf("you are not authorized for this or the resource does not exist")
 			}
 
-			updatedCompetitor, err := competitorService.Update(competitor)
+			updatedCompetitor, err := cf.competitorService.Update(competitor)
 			if err != nil {
-				return nil, fmt.Errorf("")
+				return nil, fmt.Errorf("error on competitor update")
 			}
 			return updatedCompetitor, nil
 		},
@@ -145,17 +145,14 @@ func (cf *CompetitorField) Delete() *graphql.Field {
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-			competitorService := &services.CompetitorService{
-				DB: cf.DB,
-			}
 			userID := p.Context.Value("user_id").(int)
 			id, _ := p.Args["id"].(int)
 
-			competitor := competitorService.GetOne(id)
+			competitor := cf.competitorService.GetOne(id)
 			if !cf.isAuthorized(userID, competitor) {
 				return nil, fmt.Errorf("you are not authorized for this or the resource does not exist")
 			}
-			competitorService.Delete(competitor)
+			cf.competitorService.Delete(competitor)
 			return competitor, nil
 		},
 	}

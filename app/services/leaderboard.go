@@ -3,6 +3,7 @@ package services
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/joaovicdsantos/whosbest-api/app/models"
 )
@@ -58,30 +59,48 @@ func (s *LeaderboardService) GetOne(id int) models.Leaderboard {
 	return leaderboard
 }
 
-func (s *LeaderboardService) Create(leaderboard models.Leaderboard) error {
+func (s *LeaderboardService) Create(leaderboard models.Leaderboard) (models.Leaderboard, error) {
 	sql := "INSERT INTO Leaderboards (title, description, creator) VALUES ($1, $2, $3)"
 	insert, err := s.DB.Prepare(sql)
 	if err != nil {
-		return fmt.Errorf("error creating leaderboard")
+		return models.Leaderboard{}, fmt.Errorf("error creating leaderboard")
 	}
-	_, err = insert.Exec(leaderboard.Title, leaderboard.Description, leaderboard.Creator.Id)
+
+	err = insert.QueryRow(leaderboard.Title, leaderboard.Description, leaderboard.Creator.Id).Scan(&leaderboard.Id)
 	if err != nil {
-		return fmt.Errorf("error creating leaderboard")
+		return models.Leaderboard{}, fmt.Errorf("error creating leaderboard")
 	}
-	return nil
+
+	return leaderboard, nil
 }
 
-func (s *LeaderboardService) Update(leaderboard models.Leaderboard) error {
+func (s *LeaderboardService) Update(leaderboard models.Leaderboard) (models.Leaderboard, error) {
 	sql := "UPDATE Leaderboards SET title = $1, description = $2 WHERE Id = $3"
+	current := s.GetOne(leaderboard.Id)
+
+	if len(strings.Trim(leaderboard.Title, "")) > 0 {
+		current.Title = leaderboard.Title
+	}
+
+	if len(strings.Trim(leaderboard.Description, "")) > 0 {
+		current.Description = leaderboard.Description
+	}
+
 	update, err := s.DB.Prepare(sql)
 	if err != nil {
-		return fmt.Errorf("error updating leaderboard")
+		return models.Leaderboard{}, fmt.Errorf("error updating leaderboard")
 	}
-	_, err = update.Exec(leaderboard.Title, leaderboard.Description, leaderboard.Id)
+
+	_, err = update.Exec(
+		current.Title,
+		current.Description,
+		leaderboard.Id,
+	)
 	if err != nil {
-		return fmt.Errorf("error updating leaderboard")
+		return models.Leaderboard{}, fmt.Errorf("error updating leaderboard")
 	}
-	return nil
+
+	return current, nil
 }
 
 func (s *LeaderboardService) Delete(leaderboard models.Leaderboard) error {

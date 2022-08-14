@@ -138,7 +138,7 @@ func (l *LeaderboardRoutes) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Update(leaderboard)
-	err := l.leaderboardService.Update(data)
+	_, err := l.leaderboardService.Update(data)
 	if err != nil {
 		response := helpers.NewResponseError(err.Error(), http.StatusInternalServerError)
 		response.SendResponse(w)
