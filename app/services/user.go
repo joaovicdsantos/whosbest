@@ -17,7 +17,7 @@ func (s *UserService) GetAll() ([]models.User, error) {
 	sql := "SELECT * FROM Users"
 	result, err := s.DB.Query(sql)
 	if err != nil {
-		return []models.User{}, fmt.Errorf("Error querying all users")
+		return []models.User{}, fmt.Errorf("error querying all users")
 	}
 
 	for result.Next() {
@@ -25,7 +25,7 @@ func (s *UserService) GetAll() ([]models.User, error) {
 
 		err = result.Scan(&user.Id, &user.Username, &user.Password)
 		if err != nil {
-			return []models.User{}, fmt.Errorf("Error querying all users")
+			return []models.User{}, fmt.Errorf("error querying all users")
 		}
 
 		users = append(users, user)
@@ -66,11 +66,11 @@ func (s *UserService) Create(user models.User) error {
 	sql := "INSERT INTO Users (username, password) VALUES ($1, $2)"
 	insert, err := s.DB.Prepare(sql)
 	if err != nil {
-		return fmt.Errorf("Error creating user")
+		return fmt.Errorf("error creating user")
 	}
 	_, err = insert.Exec(user.Username, user.Password)
 	if err != nil {
-		return fmt.Errorf("Error creating user")
+		return fmt.Errorf("error creating user")
 	}
 	return nil
 }

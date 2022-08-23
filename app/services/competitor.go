@@ -3,6 +3,7 @@ package services
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/joaovicdsantos/whosbest-api/app/models"
 )
@@ -17,15 +18,15 @@ func (s *CompetitorService) GetAll() ([]models.Competitor, error) {
 	sql := "SELECT * FROM Competitors"
 	result, err := s.DB.Query(sql)
 	if err != nil {
-		return []models.Competitor{}, fmt.Errorf("Error querying all competitor")
+		return []models.Competitor{}, fmt.Errorf("error querying all competitor")
 	}
 
 	for result.Next() {
 		var competitor models.Competitor
 
-		err = result.Scan(&competitor.Id, &competitor.Title, &competitor.Description, &competitor.ImageURL, &competitor.Votes, &competitor.LeaderboardId)
+		err = result.Scan(&competitor.Id, &competitor.Title, &competitor.Description, &competitor.ImageURL, &competitor.Votes, &competitor.Leaderboard)
 		if err != nil {
-			return []models.Competitor{}, fmt.Errorf("Error querying all competitor")
+			return []models.Competitor{}, fmt.Errorf("error querying all competitor")
 		}
 
 		competitors = append(competitors, competitor)
@@ -45,15 +46,15 @@ func (s *CompetitorService) GetAllByLeaderboardId(id int) ([]models.Competitor, 
 
 	result, err := s.DB.Query(sql, id)
 	if err != nil {
-		return []models.Competitor{}, fmt.Errorf("Error querying all competitor by leaderboardId")
+		return []models.Competitor{}, fmt.Errorf("error querying all competitor by leaderboardId")
 	}
 
 	for result.Next() {
 		var competitor models.Competitor
 
-		err = result.Scan(&competitor.Id, &competitor.Title, &competitor.Description, &competitor.ImageURL, &competitor.Votes, &competitor.LeaderboardId)
+		err = result.Scan(&competitor.Id, &competitor.Title, &competitor.Description, &competitor.ImageURL, &competitor.Votes, &competitor.Leaderboard)
 		if err != nil {
-			return []models.Competitor{}, fmt.Errorf("Error querying all competitor by leaderboardId")
+			return []models.Competitor{}, fmt.Errorf("error querying all competitor by leaderboardId")
 		}
 
 		competitors = append(competitors, competitor)
@@ -69,7 +70,7 @@ func (s *CompetitorService) GetOne(id int) models.Competitor {
 	var competitor models.Competitor
 
 	sql := "SELECT * FROM Competitors WHERE Id = $1"
-	err := s.DB.QueryRow(sql, id).Scan(&competitor.Id, &competitor.Title, &competitor.Description, &competitor.ImageURL, &competitor.Votes, &competitor.LeaderboardId)
+	err := s.DB.QueryRow(sql, id).Scan(&competitor.Id, &competitor.Title, &competitor.Description, &competitor.ImageURL, &competitor.Votes, &competitor.Leaderboard)
 	if err != nil {
 		return models.Competitor{}
 	}
@@ -77,41 +78,65 @@ func (s *CompetitorService) GetOne(id int) models.Competitor {
 	return competitor
 }
 
-func (s *CompetitorService) Create(competitor models.Competitor) error {
-	sql := "INSERT INTO Competitors (title, description, imageUrl, votes, leaderboardId) VALUES ($1, $2, $3, 0, $4)"
+func (s *CompetitorService) Create(competitor models.Competitor) (models.Competitor, error) {
+	sql := "INSERT INTO Competitors (title, description, imageUrl, votes, leaderboard) VALUES ($1, $2, $3, 0, $4) RETURNING id"
 	insert, err := s.DB.Prepare(sql)
 	if err != nil {
-		return fmt.Errorf("Error creating competitor")
+		return models.Competitor{}, fmt.Errorf("error creating competitor")
 	}
-	_, err = insert.Exec(competitor.Title, competitor.Description, competitor.ImageURL, competitor.LeaderboardId)
+
+	err = insert.QueryRow(competitor.Title, competitor.Description, competitor.ImageURL, competitor.Leaderboard).Scan(&competitor.Id)
 	if err != nil {
-		return fmt.Errorf("Error creating competitor")
+		return models.Competitor{}, fmt.Errorf("error creating competitor")
 	}
-	return nil
+
+	return competitor, nil
 }
 
-func (s *CompetitorService) Update(competitor models.Competitor) error {
+func (s *CompetitorService) Update(competitor models.Competitor) (models.Competitor, error) {
 	sql := "UPDATE Competitors SET title = $1, description = $2, imageurl = $3 WHERE Id = $4"
+
+	current := s.GetOne(competitor.Id)
+
+	if len(strings.Trim(competitor.Title, "")) > 0 {
+		current.Title = competitor.Title
+	}
+
+	if len(strings.Trim(competitor.Description, "")) > 0 {
+		current.Description = competitor.Description
+	}
+
+	if len(strings.Trim(competitor.ImageURL, "")) > 0 {
+		current.ImageURL = competitor.ImageURL
+	}
+
 	update, err := s.DB.Prepare(sql)
 	if err != nil {
-		return fmt.Errorf("Error updating competitor")
+		return models.Competitor{}, fmt.Errorf("error updating competitor")
 	}
-	_, err = update.Exec(competitor.Title, competitor.Description, competitor.ImageURL, competitor.Id)
+
+	_, err = update.Exec(
+		current.Title,
+		current.Description,
+		current.ImageURL,
+		competitor.Id,
+	)
 	if err != nil {
-		return fmt.Errorf("Error updating competitor")
+		return models.Competitor{}, fmt.Errorf("error updating competitor")
 	}
-	return nil
+
+	return current, nil
 }
 
 func (s *CompetitorService) Delete(competitor models.Competitor) error {
 	sql := "DELETE FROM Competitors WHERE Id = $1"
 	del, err := s.DB.Prepare(sql)
 	if err != nil {
-		return fmt.Errorf("Error deleting competitor")
+		return fmt.Errorf("error deleting competitor")
 	}
 	_, err = del.Exec(competitor.Id)
 	if err != nil {
-		return fmt.Errorf("Error deleting competitor")
+		return fmt.Errorf("error deleting competitor")
 	}
 	return nil
 }
@@ -120,11 +145,11 @@ func (s *CompetitorService) Vote(competitor models.Competitor) error {
 	sql := "UPDATE Competitors SET Votes = Votes + 1 WHERE Id = $1"
 	del, err := s.DB.Prepare(sql)
 	if err != nil {
-		return fmt.Errorf("Error voting for competitor")
+		return fmt.Errorf("error voting for competitor")
 	}
 	_, err = del.Exec(competitor.Id)
 	if err != nil {
-		return fmt.Errorf("Error voting for competitor")
+		return fmt.Errorf("error voting for competitor")
 	}
 	return nil
 }

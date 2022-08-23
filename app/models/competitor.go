@@ -6,7 +6,7 @@ type Competitor struct {
 	Description   string `json:"description"`
 	ImageURL      string `json:"image_url"`
 	Votes         int    `json:"votes"`
-	LeaderboardId int    `json:"leaderboard_id"`
+	Leaderboard   int    `json:"leaderboard"`
 }
 
 func (c *Competitor) Update(competitor Competitor) {

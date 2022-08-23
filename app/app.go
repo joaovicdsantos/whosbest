@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/joaovicdsantos/whosbest-api/app/handler"
+	"github.com/joaovicdsantos/whosbest-api/app/session"
 )
 
 type App struct {
@@ -19,23 +20,21 @@ func (a *App) Initialize(db *sql.DB) {
 
 func (a *App) SetRoutes(db *sql.DB) {
 	// User routes
-	userRoutes := new(handler.UserRoutes)
-	userRoutes.DB = db
-	a.mux.Handle("/user", userRoutes)
-	a.mux.Handle("/user/", userRoutes)
+	userRoutes := handler.NewUserRoutes(db)
+	a.mux.HandleFunc("/register", userRoutes.Register)
 	a.mux.HandleFunc("/login", userRoutes.Login)
 
-	// Leaderboard routes
-	leaderboardRoutes := new(handler.LeaderboardRoutes)
-	leaderboardRoutes.DB = db
-	a.mux.Handle("/leaderboard", leaderboardRoutes)
-	a.mux.Handle("/leaderboard/", leaderboardRoutes)
+	// Graphql route
+	graphqlRoute := handler.GraphqlRoute{DB: db}
+	a.mux.HandleFunc("/graphql", graphqlRoute.HandleGraphqlRequest)
 
-	// Competitor routes
-	competitorRoutes := new(handler.CompetitorRoutes)
-	competitorRoutes.DB = db
-	a.mux.Handle("/competitor", competitorRoutes)
-	a.mux.Handle("/competitor/", competitorRoutes)
+	// Websocket
+	hub := session.NewHub()
+	go hub.Run()
+	a.mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		session.ServerWs(hub, db, w, r)
+	})
+
 }
 
 func (a *App) Run() {

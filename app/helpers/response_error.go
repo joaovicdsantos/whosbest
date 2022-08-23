@@ -34,6 +34,8 @@ func (r *ResponseError) SendResponse(w http.ResponseWriter) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(r.StatusCode)
 	w.Write(response)
 }

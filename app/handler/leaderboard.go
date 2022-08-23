@@ -59,19 +59,14 @@ func (l *LeaderboardRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method == http.MethodGet && leaderboardGetAllRe.MatchString(r.URL.Path):
 		l.GetAll(w, r)
-		break
 	case r.Method == http.MethodGet && leaderboardGetOneRe.MatchString(r.URL.Path):
 		l.GetOne(w, r)
-		break
 	case r.Method == http.MethodPost && leaderboardCreateRe.MatchString(r.URL.Path):
 		l.Create(w, r)
-		break
 	case r.Method == http.MethodPut && leaderboardGetOneRe.MatchString(r.URL.Path):
 		l.Update(w, r)
-		break
 	case r.Method == http.MethodDelete && leaderboardDeleteRe.MatchString(r.URL.Path):
 		l.Delete(w, r)
-		break
 	default:
 		response := helpers.NewResponseError("Method not allowed", http.StatusMethodNotAllowed)
 		response.SendResponse(w)
@@ -143,7 +138,7 @@ func (l *LeaderboardRoutes) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Update(leaderboard)
-	err := l.leaderboardService.Update(data)
+	_, err := l.leaderboardService.Update(data)
 	if err != nil {
 		response := helpers.NewResponseError(err.Error(), http.StatusInternalServerError)
 		response.SendResponse(w)
