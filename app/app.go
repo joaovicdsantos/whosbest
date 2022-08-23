@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/joaovicdsantos/whosbest-api/app/handler"
+	"github.com/joaovicdsantos/whosbest-api/app/session"
 )
 
 type App struct {
@@ -26,6 +27,14 @@ func (a *App) SetRoutes(db *sql.DB) {
 	// Graphql route
 	graphqlRoute := handler.GraphqlRoute{DB: db}
 	a.mux.HandleFunc("/graphql", graphqlRoute.HandleGraphqlRequest)
+
+	// Websocket
+	hub := session.NewHub()
+	go hub.Run()
+	a.mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		session.ServerWs(hub, db, w, r)
+	})
+
 }
 
 func (a *App) Run() {

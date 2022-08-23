@@ -41,6 +41,15 @@ func ParseMapToStruct(genericMap map[string]interface{}, model interface{}) erro
 	return nil
 }
 
+func StructToMap(obj interface{}) (newMap map[string]interface{}, err error) {
+	data, err := json.Marshal(obj)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(data, &newMap)
+	return
+}
+
 func GetCurrentUser(payload map[string]interface{}, db *sql.DB) models.User {
 	username := fmt.Sprintf("%s", payload["username"])
 
