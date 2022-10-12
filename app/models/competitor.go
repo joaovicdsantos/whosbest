@@ -1,12 +1,12 @@
 package models
 
 type Competitor struct {
-	Id            int    `json:"id"`
-	Title         string `json:"title"`
-	Description   string `json:"description"`
-	ImageURL      string `json:"image_url"`
-	Votes         int    `json:"votes"`
-	Leaderboard   int    `json:"leaderboard"`
+	Id          int    `json:"id"`
+	Title       string `json:"title" validate:"max=80"`
+	Description string `json:"description" validate:"min=10,max=600"`
+	ImageURL    string `json:"image_url" validate:"max=120"`
+	Votes       int    `json:"votes" validate:"gte=0"`
+	Leaderboard int    `json:"leaderboard"`
 }
 
 func (c *Competitor) Update(competitor Competitor) {

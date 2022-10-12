@@ -3,6 +3,7 @@ package services
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/joaovicdsantos/whosbest-api/app/models"
 )
@@ -14,7 +15,7 @@ type UserService struct {
 func (s *UserService) GetAll() ([]models.User, error) {
 	var users []models.User
 
-	sql := "SELECT * FROM Users"
+	sql := "SELECT id, username, password FROM Users"
 	result, err := s.DB.Query(sql)
 	if err != nil {
 		return []models.User{}, fmt.Errorf("error querying all users")
@@ -41,7 +42,7 @@ func (s *UserService) GetAll() ([]models.User, error) {
 func (s *UserService) GetOne(id int) models.User {
 	var user models.User
 
-	sql := "SELECT * FROM Users WHERE Id = $1"
+	sql := "SELECT id, username, password FROM Users WHERE Id = $1"
 	err := s.DB.QueryRow(sql, id).Scan(&user.Id, &user.Username, &user.Password)
 	if err != nil {
 		return models.User{}
@@ -53,7 +54,7 @@ func (s *UserService) GetOne(id int) models.User {
 func (s *UserService) GetOneByUsername(username string) models.User {
 	var user models.User
 
-	sql := "SELECT * FROM Users WHERE Username = $1"
+	sql := "SELECT id, username, password FROM Users WHERE Username = $1"
 	err := s.DB.QueryRow(sql, username).Scan(&user.Id, &user.Username, &user.Password)
 	if err != nil {
 		return models.User{}
@@ -68,7 +69,7 @@ func (s *UserService) Create(user models.User) error {
 	if err != nil {
 		return fmt.Errorf("error creating user")
 	}
-	_, err = insert.Exec(user.Username, user.Password)
+	_, err = insert.Exec(strings.TrimSpace(user.Username), user.Password)
 	if err != nil {
 		return fmt.Errorf("error creating user")
 	}

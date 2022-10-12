@@ -2,8 +2,8 @@ package models
 
 type Leaderboard struct {
 	Id          int           `json:"id"`
-	Title       string        `json:"title"`
-	Description string        `json:"description"`
+	Title       string        `json:"title" validate:"max=80"`
+	Description string        `json:"description" validate:"min=10,max=600"`
 	Creator     *User         `json:"creator"`
 	Competitors *[]Competitor `json:"competitors"`
 }

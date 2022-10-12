@@ -15,7 +15,7 @@ type CompetitorService struct {
 func (s *CompetitorService) GetAll() ([]models.Competitor, error) {
 	var competitors []models.Competitor
 
-	sql := "SELECT * FROM Competitors"
+	sql := "SELECT id, title, description, imageurl, votes, leaderboard FROM Competitors"
 	result, err := s.DB.Query(sql)
 	if err != nil {
 		return []models.Competitor{}, fmt.Errorf("error querying all competitor")
@@ -42,7 +42,7 @@ func (s *CompetitorService) GetAll() ([]models.Competitor, error) {
 func (s *CompetitorService) GetAllByLeaderboardId(id int) ([]models.Competitor, error) {
 	var competitors []models.Competitor
 
-	sql := "SELECT * FROM Competitors WHERE id = $1"
+	sql := "SELECT id, title, description, imageurl, votes, leaderboard FROM Competitors WHERE id = $1"
 
 	result, err := s.DB.Query(sql, id)
 	if err != nil {
@@ -69,7 +69,7 @@ func (s *CompetitorService) GetAllByLeaderboardId(id int) ([]models.Competitor, 
 func (s *CompetitorService) GetOne(id int) models.Competitor {
 	var competitor models.Competitor
 
-	sql := "SELECT * FROM Competitors WHERE Id = $1"
+	sql := "SELECT id, title, description, imageurl, votes, leaderboard FROM Competitors WHERE Id = $1"
 	err := s.DB.QueryRow(sql, id).Scan(&competitor.Id, &competitor.Title, &competitor.Description, &competitor.ImageURL, &competitor.Votes, &competitor.Leaderboard)
 	if err != nil {
 		return models.Competitor{}
@@ -85,8 +85,14 @@ func (s *CompetitorService) Create(competitor models.Competitor) (models.Competi
 		return models.Competitor{}, fmt.Errorf("error creating competitor")
 	}
 
-	err = insert.QueryRow(competitor.Title, competitor.Description, competitor.ImageURL, competitor.Leaderboard).Scan(&competitor.Id)
+	err = insert.QueryRow(
+		strings.TrimSpace(competitor.Title),
+		strings.TrimSpace(competitor.Description),
+		strings.TrimSpace(competitor.ImageURL),
+		competitor.Leaderboard,
+	).Scan(&competitor.Id)
 	if err != nil {
+		fmt.Println(err)
 		return models.Competitor{}, fmt.Errorf("error creating competitor")
 	}
 
@@ -98,15 +104,15 @@ func (s *CompetitorService) Update(competitor models.Competitor) (models.Competi
 
 	current := s.GetOne(competitor.Id)
 
-	if len(strings.Trim(competitor.Title, "")) > 0 {
+	if len(strings.TrimSpace(competitor.Title)) > 0 {
 		current.Title = competitor.Title
 	}
 
-	if len(strings.Trim(competitor.Description, "")) > 0 {
+	if len(strings.TrimSpace(competitor.Description)) > 0 {
 		current.Description = competitor.Description
 	}
 
-	if len(strings.Trim(competitor.ImageURL, "")) > 0 {
+	if len(strings.TrimSpace(competitor.ImageURL)) > 0 {
 		current.ImageURL = competitor.ImageURL
 	}
 
@@ -116,9 +122,9 @@ func (s *CompetitorService) Update(competitor models.Competitor) (models.Competi
 	}
 
 	_, err = update.Exec(
-		current.Title,
-		current.Description,
-		current.ImageURL,
+		strings.TrimSpace(current.Title),
+		strings.TrimSpace(current.Description),
+		strings.TrimSpace(current.ImageURL),
 		competitor.Id,
 	)
 	if err != nil {

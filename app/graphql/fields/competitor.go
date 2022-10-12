@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/graphql-go/graphql"
 	"github.com/joaovicdsantos/whosbest-api/app/graphql/types"
 	"github.com/joaovicdsantos/whosbest-api/app/helpers"
@@ -86,6 +87,12 @@ func (cf *CompetitorField) Create() *graphql.Field {
 				return nil, fmt.Errorf("you are not authorized for this")
 			}
 
+			validate := validator.New()
+			err := validate.Struct(competitor)
+			if err != nil {
+				return nil, err
+			}
+
 			createdCompetitor, err := cf.competitorService.Create(competitor)
 			if err != nil {
 				return nil, fmt.Errorf("error on competitor creation")
@@ -123,8 +130,19 @@ func (cf *CompetitorField) Update() *graphql.Field {
 				return nil, fmt.Errorf("invalid update params")
 			}
 
-			if !cf.isAuthorized(userID, competitor) {
+			savedCompetitor := cf.competitorService.GetOne(userID)
+			if savedCompetitor.Id == 0 {
+				return nil, fmt.Errorf("invalid user")
+			}
+
+			if !cf.isAuthorized(userID, savedCompetitor) {
 				return nil, fmt.Errorf("you are not authorized for this or the resource does not exist")
+			}
+
+			validate := validator.New()
+			err := validate.Struct(competitor)
+			if err != nil {
+				return nil, err
 			}
 
 			updatedCompetitor, err := cf.competitorService.Update(competitor)

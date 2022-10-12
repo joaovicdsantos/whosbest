@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/graphql-go/graphql"
 	"github.com/joaovicdsantos/whosbest-api/app/graphql/types"
 	"github.com/joaovicdsantos/whosbest-api/app/helpers"
@@ -73,8 +74,15 @@ func (lf *LeaderboardField) Create() *graphql.Field {
 
 			leaderboard.Creator = lf.getCurrentUser(userID)
 
+			validate := validator.New()
+			err := validate.Struct(leaderboard)
+			if err != nil {
+				return nil, err
+			}
+
 			createdLeaderboard, err := lf.leaderboardService.Create(leaderboard)
 			if err != nil {
+				fmt.Println(err)
 				return nil, fmt.Errorf("error on leaderboard creation")
 			}
 
@@ -108,7 +116,13 @@ func (lf *LeaderboardField) Update() *graphql.Field {
 				return nil, fmt.Errorf("you are not authorized for this or the resource does not exist")
 			}
 
-			updatedLeaderboard, err := lf.leaderboardService.Create(leaderboard)
+			validate := validator.New()
+			err := validate.Struct(leaderboard)
+			if err != nil {
+				return nil, err
+			}
+
+			updatedLeaderboard, err := lf.leaderboardService.Update(leaderboard)
 			if err != nil {
 				return nil, fmt.Errorf("error on leaderboard update")
 			}
