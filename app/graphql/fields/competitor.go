@@ -31,7 +31,8 @@ func (cf *CompetitorField) GetOne() *graphql.Field {
 		Type: types.CompetitorType,
 		Args: graphql.FieldConfigArgument{
 			"id": &graphql.ArgumentConfig{
-				Type: graphql.NewNonNull(graphql.Int),
+				Type:        graphql.NewNonNull(graphql.Int),
+				Description: "Competitor identifier",
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -59,16 +60,20 @@ func (cf *CompetitorField) Create() *graphql.Field {
 		Type: types.CompetitorType,
 		Args: graphql.FieldConfigArgument{
 			"title": &graphql.ArgumentConfig{
-				Type: graphql.NewNonNull(graphql.String),
+				Type:        graphql.NewNonNull(graphql.String),
+				Description: "Competitor's name or title",
 			},
 			"description": &graphql.ArgumentConfig{
-				Type: graphql.NewNonNull(graphql.String),
+				Type:        graphql.NewNonNull(graphql.String),
+				Description: "A description for competitor attributes",
 			},
 			"image_url": &graphql.ArgumentConfig{
-				Type: graphql.NewNonNull(graphql.String),
+				Type:        graphql.NewNonNull(graphql.String),
+				Description: "A image for represent the competitor",
 			},
 			"leaderboard": &graphql.ArgumentConfig{
-				Type: graphql.NewNonNull(graphql.Int),
+				Type:        graphql.NewNonNull(graphql.Int),
+				Description: "Competitor's leaderboard",
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -108,19 +113,23 @@ func (cf *CompetitorField) Update() *graphql.Field {
 		Type: types.CompetitorType,
 		Args: graphql.FieldConfigArgument{
 			"id": &graphql.ArgumentConfig{
-				Type: graphql.NewNonNull(graphql.Int),
+				Type:        graphql.NewNonNull(graphql.Int),
+				Description: "Competitor identifier",
 			},
 			"title": &graphql.ArgumentConfig{
 				Type:         graphql.String,
 				DefaultValue: "",
+				Description:  "Competitor's name or title",
 			},
 			"description": &graphql.ArgumentConfig{
 				Type:         graphql.String,
 				DefaultValue: "",
+				Description:  "A description for competitor attributes",
 			},
 			"image_url": &graphql.ArgumentConfig{
 				Type:         graphql.String,
 				DefaultValue: "",
+				Description:  "A image for represent the competitor",
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -159,7 +168,8 @@ func (cf *CompetitorField) Delete() *graphql.Field {
 		Type: types.CompetitorType,
 		Args: graphql.FieldConfigArgument{
 			"id": &graphql.ArgumentConfig{
-				Type: graphql.NewNonNull(graphql.Int),
+				Type:        graphql.NewNonNull(graphql.Int),
+				Description: "A description for competitor attributes",
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {

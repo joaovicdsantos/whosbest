@@ -32,6 +32,7 @@ func (lf *LeaderboardField) GetOne() *graphql.Field {
 		Args: graphql.FieldConfigArgument{
 			"id": &graphql.ArgumentConfig{
 				Type: graphql.NewNonNull(graphql.Int),
+				Description: "Leaderboard identifier",
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -60,9 +61,11 @@ func (lf *LeaderboardField) Create() *graphql.Field {
 		Args: graphql.FieldConfigArgument{
 			"title": &graphql.ArgumentConfig{
 				Type: graphql.NewNonNull(graphql.String),
+				Description: "Leaderboard's title",
 			},
 			"description": &graphql.ArgumentConfig{
 				Type: graphql.NewNonNull(graphql.String),
+				Description: "A description for leaderboard",
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -97,12 +100,15 @@ func (lf *LeaderboardField) Update() *graphql.Field {
 		Args: graphql.FieldConfigArgument{
 			"id": &graphql.ArgumentConfig{
 				Type: graphql.NewNonNull(graphql.Int),
+				Description: "Leaderboard identifier",
 			},
 			"title": &graphql.ArgumentConfig{
 				Type: graphql.String,
+				Description: "Leaderboard's title",
 			},
 			"description": &graphql.ArgumentConfig{
 				Type: graphql.String,
+				Description: "A description for leaderboard",
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -138,6 +144,7 @@ func (lf *LeaderboardField) Delete() *graphql.Field {
 		Args: graphql.FieldConfigArgument{
 			"id": &graphql.ArgumentConfig{
 				Type: graphql.NewNonNull(graphql.Int),
+				Description: "Leaderboard identifier",
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {

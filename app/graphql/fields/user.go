@@ -28,7 +28,8 @@ func (uf *UserField) GetOne() *graphql.Field {
 		Type: types.UserType,
 		Args: graphql.FieldConfigArgument{
 			"id": &graphql.ArgumentConfig{
-				Type: graphql.NewNonNull(graphql.Int),
+				Type:        graphql.NewNonNull(graphql.Int),
+				Description: "User identifier",
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
