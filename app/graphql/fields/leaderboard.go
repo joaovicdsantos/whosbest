@@ -31,7 +31,7 @@ func (lf *LeaderboardField) GetOne() *graphql.Field {
 		Type: types.LeaderboardType,
 		Args: graphql.FieldConfigArgument{
 			"id": &graphql.ArgumentConfig{
-				Type: graphql.NewNonNull(graphql.Int),
+				Type:        graphql.NewNonNull(graphql.Int),
 				Description: "Leaderboard identifier",
 			},
 		},
@@ -60,11 +60,11 @@ func (lf *LeaderboardField) Create() *graphql.Field {
 		Type: types.LeaderboardType,
 		Args: graphql.FieldConfigArgument{
 			"title": &graphql.ArgumentConfig{
-				Type: graphql.NewNonNull(graphql.String),
+				Type:        graphql.NewNonNull(graphql.String),
 				Description: "Leaderboard's title",
 			},
 			"description": &graphql.ArgumentConfig{
-				Type: graphql.NewNonNull(graphql.String),
+				Type:        graphql.NewNonNull(graphql.String),
 				Description: "A description for leaderboard",
 			},
 		},
@@ -99,15 +99,15 @@ func (lf *LeaderboardField) Update() *graphql.Field {
 		Type: types.LeaderboardType,
 		Args: graphql.FieldConfigArgument{
 			"id": &graphql.ArgumentConfig{
-				Type: graphql.NewNonNull(graphql.Int),
+				Type:        graphql.NewNonNull(graphql.Int),
 				Description: "Leaderboard identifier",
 			},
 			"title": &graphql.ArgumentConfig{
-				Type: graphql.String,
+				Type:        graphql.String,
 				Description: "Leaderboard's title",
 			},
 			"description": &graphql.ArgumentConfig{
-				Type: graphql.String,
+				Type:        graphql.String,
 				Description: "A description for leaderboard",
 			},
 		},
@@ -118,7 +118,8 @@ func (lf *LeaderboardField) Update() *graphql.Field {
 				return nil, fmt.Errorf("invalid update params")
 			}
 
-			if lf.leaderboardService.GetOne(leaderboard.Id).Creator.Id != userID {
+			savedLeaderboard := lf.leaderboardService.GetOne(leaderboard.Id)
+			if savedLeaderboard.Id == 0 || savedLeaderboard.Creator.Id != userID {
 				return nil, fmt.Errorf("you are not authorized for this or the resource does not exist")
 			}
 
@@ -143,7 +144,7 @@ func (lf *LeaderboardField) Delete() *graphql.Field {
 		Type: types.LeaderboardType,
 		Args: graphql.FieldConfigArgument{
 			"id": &graphql.ArgumentConfig{
-				Type: graphql.NewNonNull(graphql.Int),
+				Type:        graphql.NewNonNull(graphql.Int),
 				Description: "Leaderboard identifier",
 			},
 		},
@@ -152,7 +153,7 @@ func (lf *LeaderboardField) Delete() *graphql.Field {
 			id, _ := p.Args["id"].(int)
 
 			leaderboard := lf.leaderboardService.GetOne(id)
-			if leaderboard.Creator.Id == userID {
+			if leaderboard.Id == 0 || leaderboard.Creator.Id != userID {
 				return nil, fmt.Errorf("you are not authorized for this or the resource does not exist")
 			}
 			lf.leaderboardService.Delete(leaderboard)
@@ -160,6 +161,7 @@ func (lf *LeaderboardField) Delete() *graphql.Field {
 		},
 	}
 }
+
 
 func (lf *LeaderboardField) getCurrentUser(id int) *models.User {
 	userService := &services.UserService{

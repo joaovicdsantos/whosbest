@@ -177,7 +177,7 @@ func (cf *CompetitorField) Delete() *graphql.Field {
 			id, _ := p.Args["id"].(int)
 
 			competitor := cf.competitorService.GetOne(id)
-			if !cf.isAuthorized(userID, competitor) {
+			if competitor.Id == 0 || !cf.isAuthorized(userID, competitor) {
 				return nil, fmt.Errorf("you are not authorized for this or the resource does not exist")
 			}
 			cf.competitorService.Delete(competitor)
