@@ -14,15 +14,21 @@ type GraphqlRoute struct {
 	DB *sql.DB
 }
 
-
 func (gr *GraphqlRoute) HandleGraphqlRequest(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost && r.Method != http.MethodGet {
+		response := helpers.NewResponseError("Method Not Allowed", http.StatusMethodNotAllowed)
+		response.SendResponse(w)
+		return
+	}
+
 	var graphqlIn models.GraphQL
 	if err := helpers.ParseBodyToStruct(r, &graphqlIn); err != nil {
 		response := helpers.NewResponseError(err.Error(), http.StatusBadRequest)
 		response.SendResponse(w)
 		return
 	}
-	
+
 	// Token Validation
 	unparsedToken, ok := r.Header["Authorization"]
 	if !ok {
@@ -45,7 +51,6 @@ func (gr *GraphqlRoute) HandleGraphqlRequest(w http.ResponseWriter, r *http.Requ
 		response.SendResponse(w)
 		return
 	}
-	
 
 	var graphql = new(graphql.GraphQL)
 	graphql.Initialize(gr.DB)
