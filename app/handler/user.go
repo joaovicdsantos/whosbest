@@ -113,9 +113,5 @@ func (u *UserRoutes) Login(w http.ResponseWriter, r *http.Request) {
 
 func (u *UserRoutes) verifyUserByUsername(username string) bool {
 	user := u.userService.GetOneByUsername(username)
-	if user.Id != 0 {
-		return true
-	} else {
-		return false
-	}
+	return user.Id != 0
 }
