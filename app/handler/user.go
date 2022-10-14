@@ -33,6 +33,13 @@ func NewUserRoutes(db *sql.DB) *UserRoutes {
 
 func (u *UserRoutes) Register(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodPost {
+		response := helpers.NewResponseError("Method Not Allowed", http.StatusMethodNotAllowed)
+		response.SendResponse(w)
+		return
+	}
+
 	var user models.UserInput
 
 	if err := helpers.ParseBodyToStruct(r, &user); err != nil {
@@ -73,6 +80,12 @@ func (u *UserRoutes) Register(w http.ResponseWriter, r *http.Request) {
 
 func (u *UserRoutes) Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodPost {
+		response := helpers.NewResponseError("Method Not Allowed", http.StatusMethodNotAllowed)
+		response.SendResponse(w)
+		return
+	}
 
 	var user models.UserInput
 
