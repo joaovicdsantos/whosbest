@@ -43,6 +43,38 @@ func (s *LeaderboardService) GetAll() ([]models.Leaderboard, error) {
 	return leaderboards, nil
 }
 
+func (s *LeaderboardService) GetAllByCreatorId(id int) ([]models.Leaderboard, error) {
+	var leaderboards []models.Leaderboard
+
+	sql := "SELECT id, title, description, creator FROM Leaderboards WHERE creator = $1"
+
+	result, err := s.DB.Query(sql, id)
+	if err != nil {
+		return []models.Leaderboard{}, fmt.Errorf("error querying all leaderboard by creator")
+	}
+
+	for result.Next() {
+		var leaderboard models.Leaderboard
+		var creatorId int
+
+		err = result.Scan(&leaderboard.Id, &leaderboard.Title, &leaderboard.Description, &creatorId)
+		if err != nil {
+			return []models.Leaderboard{}, fmt.Errorf("error querying all leaderboard")
+		}
+
+		s.loadUser(&leaderboard, creatorId)
+		s.loadCompetitors(&leaderboard)
+
+		leaderboards = append(leaderboards, leaderboard)
+	}
+
+	if leaderboards == nil {
+		leaderboards = []models.Leaderboard{}
+	}
+
+	return leaderboards, nil
+}
+
 func (s *LeaderboardService) GetOne(id int) models.Leaderboard {
 	var leaderboard models.Leaderboard
 	var creatorId int
@@ -124,7 +156,7 @@ func (s *LeaderboardService) Delete(leaderboard models.Leaderboard) error {
 func (s *LeaderboardService) loadUser(leaderboard *models.Leaderboard, id int) {
 	var userService UserService
 	userService.DB = s.DB
-	user := userService.GetOne(id)
+	user := userService.GetOneForLeaderboard(id)
 	leaderboard.Creator = &user
 }
 

@@ -29,6 +29,8 @@ func (s *UserService) GetAll() ([]models.User, error) {
 			return []models.User{}, fmt.Errorf("error querying all users")
 		}
 
+		s.loadLeaderboards(&user)
+
 		users = append(users, user)
 	}
 
@@ -40,6 +42,20 @@ func (s *UserService) GetAll() ([]models.User, error) {
 }
 
 func (s *UserService) GetOne(id int) models.User {
+	var user models.User
+
+	sql := "SELECT id, username, password FROM Users WHERE Id = $1"
+	err := s.DB.QueryRow(sql, id).Scan(&user.Id, &user.Username, &user.Password)
+	if err != nil {
+		return models.User{}
+	}
+
+	s.loadLeaderboards(&user)
+
+	return user
+}
+
+func (s *UserService) GetOneForLeaderboard(id int) models.User {
 	var user models.User
 
 	sql := "SELECT id, username, password FROM Users WHERE Id = $1"
@@ -74,4 +90,11 @@ func (s *UserService) Create(user models.User) error {
 		return fmt.Errorf("error creating user")
 	}
 	return nil
+}
+
+func (s *UserService) loadLeaderboards(user *models.User) {
+	var leaderboarService LeaderboardService
+	leaderboarService.DB = s.DB
+	leaderboards, _ := leaderboarService.GetAllByCreatorId(user.Id)
+	user.Leaderboards = &leaderboards
 }
