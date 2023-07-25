@@ -42,7 +42,7 @@ func (s *CompetitorService) GetAll() ([]models.Competitor, error) {
 func (s *CompetitorService) GetAllByLeaderboardId(id int) ([]models.Competitor, error) {
 	var competitors []models.Competitor
 
-	sql := "SELECT id, title, description, imageurl, votes, leaderboard FROM Competitors WHERE id = $1"
+	sql := "SELECT id, title, description, imageurl, votes, leaderboard FROM Competitors WHERE leaderboard = $1"
 
 	result, err := s.DB.Query(sql, id)
 	if err != nil {
