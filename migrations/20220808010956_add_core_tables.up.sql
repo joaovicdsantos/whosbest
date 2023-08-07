@@ -8,6 +8,7 @@ create table Leaderboards (
     id serial primary key,
     title varchar(80) not null,
     description text not null,
+    imageUrl varchar(120) not null,
     creator integer not null,
     constraint fk_creator foreign key (creator) references Users(id)
 );

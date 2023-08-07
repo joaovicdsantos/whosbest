@@ -18,6 +18,10 @@ var LeaderboardType = graphql.NewObject(
 				Type:        graphql.String,
 				Description: "A description for leaderboard",
 			},
+			"image_url": &graphql.Field{
+				Type:        graphql.String,
+				Description: "A image for represent the leaderboard",
+			},
 			"creator": &graphql.Field{
 				Type:        UserForLeaderboardType,
 				Description: "Leaderboard's creator",

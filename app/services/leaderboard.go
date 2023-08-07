@@ -15,7 +15,7 @@ type LeaderboardService struct {
 func (s *LeaderboardService) GetAll() ([]models.Leaderboard, error) {
 	var leaderboards []models.Leaderboard
 
-	sql := "SELECT id, title, description, creator FROM Leaderboards"
+	sql := "SELECT id, title, description, imageurl, creator FROM Leaderboards"
 	result, err := s.DB.Query(sql)
 	if err != nil {
 		return []models.Leaderboard{}, fmt.Errorf("error querying all leaderboard")
@@ -25,7 +25,7 @@ func (s *LeaderboardService) GetAll() ([]models.Leaderboard, error) {
 		var leaderboard models.Leaderboard
 		var creatorId int
 
-		err = result.Scan(&leaderboard.Id, &leaderboard.Title, &leaderboard.Description, &creatorId)
+		err = result.Scan(&leaderboard.Id, &leaderboard.Title, &leaderboard.Description, &leaderboard.ImageURL, &creatorId)
 		if err != nil {
 			return []models.Leaderboard{}, fmt.Errorf("error querying all leaderboard")
 		}
@@ -46,7 +46,7 @@ func (s *LeaderboardService) GetAll() ([]models.Leaderboard, error) {
 func (s *LeaderboardService) GetAllByCreatorId(id int) ([]models.Leaderboard, error) {
 	var leaderboards []models.Leaderboard
 
-	sql := "SELECT id, title, description, creator FROM Leaderboards WHERE creator = $1"
+	sql := "SELECT id, title, description, imageurl, creator FROM Leaderboards WHERE creator = $1"
 
 	result, err := s.DB.Query(sql, id)
 	if err != nil {
@@ -57,7 +57,7 @@ func (s *LeaderboardService) GetAllByCreatorId(id int) ([]models.Leaderboard, er
 		var leaderboard models.Leaderboard
 		var creatorId int
 
-		err = result.Scan(&leaderboard.Id, &leaderboard.Title, &leaderboard.Description, &creatorId)
+		err = result.Scan(&leaderboard.Id, &leaderboard.Title, &leaderboard.Description, &leaderboard.ImageURL, &creatorId)
 		if err != nil {
 			return []models.Leaderboard{}, fmt.Errorf("error querying all leaderboard")
 		}
@@ -79,8 +79,8 @@ func (s *LeaderboardService) GetOne(id int) models.Leaderboard {
 	var leaderboard models.Leaderboard
 	var creatorId int
 
-	sql := "SELECT id, title, description, creator FROM Leaderboards WHERE Id = $1"
-	err := s.DB.QueryRow(sql, id).Scan(&leaderboard.Id, &leaderboard.Title, &leaderboard.Description, &creatorId)
+	sql := "SELECT id, title, description, imageurl, creator FROM Leaderboards WHERE Id = $1"
+	err := s.DB.QueryRow(sql, id).Scan(&leaderboard.Id, &leaderboard.Title, &leaderboard.Description, &leaderboard.ImageURL, &creatorId)
 	if err != nil {
 		return models.Leaderboard{}
 	}
@@ -92,7 +92,7 @@ func (s *LeaderboardService) GetOne(id int) models.Leaderboard {
 }
 
 func (s *LeaderboardService) Create(leaderboard models.Leaderboard) (models.Leaderboard, error) {
-	sql := "INSERT INTO Leaderboards (title, description, creator) VALUES ($1, $2, $3) RETURNING id"
+	sql := "INSERT INTO Leaderboards (title, description, imageurl, creator) VALUES ($1, $2, $3, $4) RETURNING id"
 	insert, err := s.DB.Prepare(sql)
 	if err != nil {
 		return models.Leaderboard{}, fmt.Errorf("error creating leaderboard")
@@ -101,6 +101,7 @@ func (s *LeaderboardService) Create(leaderboard models.Leaderboard) (models.Lead
 	err = insert.QueryRow(
 		strings.TrimSpace(leaderboard.Title),
 		strings.TrimSpace(leaderboard.Description),
+		strings.TrimSpace(leaderboard.ImageURL),
 		leaderboard.Creator.Id,
 	).Scan(&leaderboard.Id)
 	if err != nil {
@@ -112,7 +113,7 @@ func (s *LeaderboardService) Create(leaderboard models.Leaderboard) (models.Lead
 }
 
 func (s *LeaderboardService) Update(leaderboard models.Leaderboard) (models.Leaderboard, error) {
-	sql := "UPDATE Leaderboards SET title = $1, description = $2 WHERE Id = $3"
+	sql := "UPDATE Leaderboards SET title = $1, description = $2, imageurl = $3 WHERE Id = $4"
 	current := s.GetOne(leaderboard.Id)
 
 	if len(strings.Trim(leaderboard.Title, "")) > 0 {
@@ -123,6 +124,10 @@ func (s *LeaderboardService) Update(leaderboard models.Leaderboard) (models.Lead
 		current.Description = leaderboard.Description
 	}
 
+	if len(strings.TrimSpace(leaderboard.ImageURL)) > 0 {
+		current.ImageURL = leaderboard.ImageURL
+	}
+
 	update, err := s.DB.Prepare(sql)
 	if err != nil {
 		return models.Leaderboard{}, fmt.Errorf("error updating leaderboard")
@@ -131,6 +136,7 @@ func (s *LeaderboardService) Update(leaderboard models.Leaderboard) (models.Lead
 	_, err = update.Exec(
 		strings.TrimSpace(current.Title),
 		strings.TrimSpace(current.Description),
+		strings.TrimSpace(current.ImageURL),
 		leaderboard.Id,
 	)
 	if err != nil {

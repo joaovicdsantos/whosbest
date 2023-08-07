@@ -67,6 +67,10 @@ func (lf *LeaderboardField) Create() *graphql.Field {
 				Type:        graphql.NewNonNull(graphql.String),
 				Description: "A description for leaderboard",
 			},
+			"image_url": &graphql.ArgumentConfig{
+				Type:        graphql.NewNonNull(graphql.String),
+				Description: "A image to represent the competitor",
+			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			userID := p.Context.Value("user_id").(int)
@@ -109,6 +113,11 @@ func (lf *LeaderboardField) Update() *graphql.Field {
 			"description": &graphql.ArgumentConfig{
 				Type:        graphql.String,
 				Description: "A description for leaderboard",
+			},
+			"image_url": &graphql.ArgumentConfig{
+				Type:         graphql.String,
+				DefaultValue: "",
+				Description:  "A image to represent the leaderboard",
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -161,7 +170,6 @@ func (lf *LeaderboardField) Delete() *graphql.Field {
 		},
 	}
 }
-
 
 func (lf *LeaderboardField) getCurrentUser(id int) *models.User {
 	userService := &services.UserService{

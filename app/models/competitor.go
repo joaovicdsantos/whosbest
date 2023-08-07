@@ -19,5 +19,4 @@ func (c *Competitor) Update(competitor Competitor) {
 	if competitor.ImageURL != "" && c.ImageURL != competitor.ImageURL {
 		c.ImageURL = competitor.ImageURL
 	}
-
 }
