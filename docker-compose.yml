@@ -1,42 +1,39 @@
+version: "3.8"
+
 services:
-  postgres:
-    image: postgres:latest
-    restart: always
-    env_file:
-      - .env
-    volumes:
-       - data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
- 
-  app:
-    build:
-      dockerfile: Dockerfile
-      context: .
-      target: dev
-    env_file:
-      - .env
-    volumes:
-      - .:/opt/app/api
-    depends_on:
-      - postgres
-    ports:
-      - "3001:3001"
+    postgres:
+        image: postgres:latest
+        restart: always
+        env_file:
+            - .env
+        volumes:
+            - data:/var/lib/postgresql/data
+        ports:
+            - "5432:5432"
 
-  migrate: &basemigrate
-    profiles: ["tools"]
-    image: migrate/migrate
-    entrypoint: "migrate -database postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable -path /tmp/migrations"
-    command: up
-    links:
-      - postgres
-    volumes:
-      - ./migrations:/tmp/migrations
+    app:
+        build: .
+        env_file:
+            - .env
+        depends_on:
+            - postgres
+        ports:
+            - "3001:3001"
 
-  create-migration:
-    <<: *basemigrate
-    entrypoint: migrate create -dir /tmp/migrations -ext sql
-    command: ""
+    migrate: &basemigrate
+        profiles: ["tools"]
+        image: migrate/migrate
+        entrypoint: "migrate -database postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable -path /tmp/migrations"
+        command: up
+        links:
+            - postgres
+        volumes:
+            - ./migrations:/tmp/migrations
+
+    create-migration:
+        <<: *basemigrate
+        entrypoint: migrate create -dir /tmp/migrations -ext sql
+        command: ""
 
 volumes:
-  data:
+    data:

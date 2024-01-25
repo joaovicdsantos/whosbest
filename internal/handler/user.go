@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/joaovicdsantos/whosbest-api/app/helpers"
-	"github.com/joaovicdsantos/whosbest-api/app/models"
-	"github.com/joaovicdsantos/whosbest-api/app/services"
+	"github.com/joaovicdsantos/whosbest-api/internal/helpers"
+	"github.com/joaovicdsantos/whosbest-api/internal/models"
+	"github.com/joaovicdsantos/whosbest-api/internal/services"
 	"golang.org/x/crypto/bcrypt"
 )
 

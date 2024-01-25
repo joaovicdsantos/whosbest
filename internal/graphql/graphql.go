@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/graphql-go/graphql"
-	"github.com/joaovicdsantos/whosbest-api/app/graphql/fields"
+	"github.com/joaovicdsantos/whosbest-api/internal/graphql/fields"
 )
 
 type GraphQL struct {

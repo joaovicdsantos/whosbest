@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/joaovicdsantos/whosbest-api/app/models"
+	"github.com/joaovicdsantos/whosbest-api/internal/models"
 )
 
 const (
@@ -50,7 +50,7 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-		
+
 		methods := Methods{DB: c.DB}
 		result, err := methods.verifyMethodAndRun(webSocketInput)
 		if err != nil {

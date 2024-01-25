@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/joaovicdsantos/whosbest-api/app/graphql"
-	"github.com/joaovicdsantos/whosbest-api/app/helpers"
-	"github.com/joaovicdsantos/whosbest-api/app/models"
+	"github.com/joaovicdsantos/whosbest-api/internal/graphql"
+	"github.com/joaovicdsantos/whosbest-api/internal/helpers"
+	"github.com/joaovicdsantos/whosbest-api/internal/models"
 )
 
 type GraphqlRoute struct {

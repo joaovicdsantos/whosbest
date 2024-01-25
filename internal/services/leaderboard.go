@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/joaovicdsantos/whosbest-api/app/models"
+	"github.com/joaovicdsantos/whosbest-api/internal/models"
 )
 
 type LeaderboardService struct {

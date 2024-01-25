@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/joaovicdsantos/whosbest-api/app/helpers"
-	"github.com/joaovicdsantos/whosbest-api/app/models"
-	"github.com/joaovicdsantos/whosbest-api/app/services"
+	"github.com/joaovicdsantos/whosbest-api/internal/helpers"
+	"github.com/joaovicdsantos/whosbest-api/internal/models"
+	"github.com/joaovicdsantos/whosbest-api/internal/services"
 )
 
 type Methods struct {
@@ -32,17 +32,17 @@ func (m *Methods) vote(webSocketInput models.WebSocketInput) (models.WebSocketRe
 	if err := helpers.ParseMapToStruct(webSocketInput.Value, &competitorVote); err != nil {
 		return models.WebSocketResponse{}, fmt.Errorf("invalid competitor")
 	}
-	
+
 	competitorService := services.CompetitorService{DB: m.DB}
 	leaderboardService := services.LeaderboardService{DB: m.DB}
-	
+
 	competitor := competitorService.GetOne(competitorVote.Competitor)
 	if competitor.Id == 0 {
 		return models.WebSocketResponse{}, fmt.Errorf("competitor not found")
 	}
 	competitorService.Vote(competitor)
 	competitor.Votes = competitor.Votes + 1
-	
+
 	resultMap, err := helpers.StructToMap(leaderboardService.GetOne(competitor.Leaderboard))
 	if err != nil {
 		return models.WebSocketResponse{}, err
@@ -50,6 +50,6 @@ func (m *Methods) vote(webSocketInput models.WebSocketInput) (models.WebSocketRe
 
 	var webSocketResponse models.WebSocketResponse
 	webSocketResponse.Data = resultMap
-	
+
 	return webSocketResponse, nil
 }

@@ -6,10 +6,10 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/graphql-go/graphql"
-	"github.com/joaovicdsantos/whosbest-api/app/graphql/types"
-	"github.com/joaovicdsantos/whosbest-api/app/helpers"
-	"github.com/joaovicdsantos/whosbest-api/app/models"
-	"github.com/joaovicdsantos/whosbest-api/app/services"
+	"github.com/joaovicdsantos/whosbest-api/internal/graphql/types"
+	"github.com/joaovicdsantos/whosbest-api/internal/helpers"
+	"github.com/joaovicdsantos/whosbest-api/internal/models"
+	"github.com/joaovicdsantos/whosbest-api/internal/services"
 )
 
 type LeaderboardField struct {

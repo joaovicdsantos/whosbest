@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/graphql-go/graphql"
-	"github.com/joaovicdsantos/whosbest-api/app/graphql/types"
-	"github.com/joaovicdsantos/whosbest-api/app/services"
+	"github.com/joaovicdsantos/whosbest-api/internal/graphql/types"
+	"github.com/joaovicdsantos/whosbest-api/internal/services"
 )
 
 type UserField struct {

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/joaovicdsantos/whosbest-api/app/models"
+	"github.com/joaovicdsantos/whosbest-api/internal/models"
 )
 
 var (

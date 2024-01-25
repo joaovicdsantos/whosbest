@@ -1,12 +1,13 @@
-package app
+package main
 
 import (
 	"database/sql"
 	"log"
 	"net/http"
 
-	"github.com/joaovicdsantos/whosbest-api/app/handler"
-	"github.com/joaovicdsantos/whosbest-api/app/session"
+	"github.com/joaovicdsantos/whosbest-api/internal/database"
+	"github.com/joaovicdsantos/whosbest-api/internal/handler"
+	"github.com/joaovicdsantos/whosbest-api/internal/session"
 )
 
 type App struct {
@@ -39,4 +40,14 @@ func (a *App) SetRoutes(db *sql.DB) {
 
 func (a *App) Run() {
 	log.Fatal(http.ListenAndServe(":3001", a.mux))
+}
+
+func main() {
+	dbFactory := new(database.DBFactory)
+	db := dbFactory.InitDatabase()
+	defer db.Close()
+
+	app := new(App)
+	app.Initialize(db)
+	app.Run()
 }
