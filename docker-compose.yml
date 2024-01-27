@@ -1,42 +1,85 @@
+version: "3.8"
+
 services:
-  postgres:
-    image: postgres:latest
-    restart: always
-    env_file:
-      - .env
-    volumes:
-       - data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
- 
-  app:
-    build:
-      dockerfile: Dockerfile
-      context: .
-      target: dev
-    env_file:
-      - .env
-    volumes:
-      - .:/opt/app/api
-    depends_on:
-      - postgres
-    ports:
-      - "3001:3001"
+    postgres:
+        image: postgres:latest
+        restart: always
+        ports:
+            - "5432:5432"
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "pg_isready -U ${POSTGRES_USER} -h ${POSTGRES_HOST}",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        volumes:
+            - data:/var/lib/postgresql/data
+        networks:
+            - database
+        environment:
+            - POSTGRES_DB=${POSTGRES_DB}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_HOST=${POSTGRES_HOST}
+            - POSTGRES_PORT=${POSTGRES_PORT}
 
-  migrate: &basemigrate
-    profiles: ["tools"]
-    image: migrate/migrate
-    entrypoint: "migrate -database postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable -path /tmp/migrations"
-    command: up
-    links:
-      - postgres
-    volumes:
-      - ./migrations:/tmp/migrations
+    migrate:
+        image: migrate/migrate
+        entrypoint:
+            [
+                "migrate",
+                "-database",
+                "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable",
+                "-path",
+                "/migrations",
+                "up",
+            ]
+        depends_on:
+            - postgres
+        volumes:
+            - ./internal/database/migrations:/migrations
+        networks:
+            - database
 
-  create-migration:
-    <<: *basemigrate
-    entrypoint: migrate create -dir /tmp/migrations -ext sql
-    command: ""
+    whosbest:
+        build: .
+        restart: always
+        depends_on:
+            - postgres
+        deploy:
+            mode: replicated
+            replicas: 3
+        networks:
+            - database
+            - loadbalancer
+        environment:
+            - POSTGRES_DB=${POSTGRES_DB}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_HOST=${POSTGRES_HOST}
+            - POSTGRES_PORT=${POSTGRES_PORT}
+            - JWT_SECRET=${JWT_SECRET}
+
+    nginx:
+        image: nginx:1.25.3-alpine
+        restart: always
+        ports:
+            - "80:80"
+        depends_on:
+            - whosbest
+        volumes:
+            - ./nginx.conf:/etc/nginx/nginx.conf
+        networks:
+            - loadbalancer
 
 volumes:
-  data:
+    data:
+
+networks:
+    database:
+        driver: bridge
+    loadbalancer:
+        driver: bridge
