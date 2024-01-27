@@ -27,5 +27,10 @@ func (d *DBFactory) InitDatabase() *sql.DB {
 		log.Fatal("Error on connect to database")
 	}
 
+	err = db.Ping()
+	if err != nil {
+		log.Fatal("Error testing the database connection", err)
+	}
+
 	return db
 }

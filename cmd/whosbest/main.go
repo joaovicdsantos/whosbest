@@ -39,7 +39,7 @@ func (a *App) SetRoutes(db *sql.DB) {
 }
 
 func (a *App) Run() {
-	log.Fatal(http.ListenAndServe(":3001", a.mux))
+	log.Fatal(http.ListenAndServe(":3000", a.mux))
 }
 
 func main() {
